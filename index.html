@@ -96,6 +96,42 @@
             </div>
         </section>
 
+        <section class="final-stage" id="final-stage">
+            <div class="final-stage__cta">
+                <div>
+                    <h2>Última fase</h2>
+                    <p id="final-stage-helper">Tenés que completar todos los partidos de grupos para habilitarla.</p>
+                </div>
+                <button id="play-finals" type="button" disabled>Jugar la última fase</button>
+            </div>
+            <div id="knockout-stage" class="knockout-stage" hidden>
+                <div class="knockout-columns">
+                    <article class="knockout-column">
+                        <h3>Cuartos de final</h3>
+                        <div id="quarter-matches" class="knockout-list"></div>
+                    </article>
+                    <article class="knockout-column">
+                        <h3>Semifinales</h3>
+                        <div id="semi-matches" class="knockout-list"></div>
+                    </article>
+                    <article class="knockout-column knockout-column--finals">
+                        <div>
+                            <h3>Partido por el tercer puesto</h3>
+                            <div id="third-place-match" class="knockout-list"></div>
+                        </div>
+                        <div>
+                            <h3>Final</h3>
+                            <div id="final-match" class="knockout-list"></div>
+                        </div>
+                    </article>
+                </div>
+                <div id="podium" class="podium" hidden>
+                    <h3>Reconocimientos</h3>
+                    <p id="podium-text"></p>
+                </div>
+            </div>
+        </section>
+
         <section class="standings" id="standings-panel">
             <h2>Posiciones en tiempo real</h2>
             <div id="standings-container" aria-live="polite"></div>

@@ -33,12 +33,22 @@ const manualFields = document.getElementById('manual-fields');
 const manualGroupSelect = document.getElementById('manual-group-select');
 const manualPositionSelect = document.getElementById('manual-position-select');
 const manualHelperText = document.getElementById('manual-helper-text');
+const playFinalsButton = document.getElementById('play-finals');
+const finalStageHelper = document.getElementById('final-stage-helper');
+const knockoutStage = document.getElementById('knockout-stage');
+const quarterMatchesContainer = document.getElementById('quarter-matches');
+const semiMatchesContainer = document.getElementById('semi-matches');
+const thirdPlaceContainer = document.getElementById('third-place-match');
+const finalMatchContainer = document.getElementById('final-match');
+const podiumElement = document.getElementById('podium');
+const podiumText = document.getElementById('podium-text');
 
 let totalParticipants = 0;
 let matchQueue = [];
 let currentMatchIndex = 0;
 let matchHistory = [];
 let manualMode = false;
+let knockoutState = resetKnockoutState();
 
 function createPlayer(name) {
     return { name, points: 0, diff: 0 };
@@ -50,6 +60,36 @@ function getSlotLabel(slot) {
 
 function getTotalCapacity() {
     return GROUPS.reduce((sum, group) => sum + group.slots.length, 0);
+}
+
+function getOrderedPlayers(group) {
+    return group.slots
+        .filter(Boolean)
+        .sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.diff !== a.diff) return b.diff - a.diff;
+            return a.name.localeCompare(b.name);
+        });
+}
+
+function createKnockoutMatch(id, label, playerOne = null, playerTwo = null) {
+    return {
+        id,
+        label,
+        players: [playerOne || null, playerTwo || null],
+        winnerIndex: null,
+    };
+}
+
+function resetKnockoutState() {
+    return {
+        started: false,
+        quarters: [],
+        semis: [],
+        thirdPlace: null,
+        final: null,
+        podium: null,
+    };
 }
 
 function renderGroups() {
@@ -309,6 +349,7 @@ function resetDraw() {
     matchQueue = [];
     currentMatchIndex = 0;
     matchHistory = [];
+    knockoutState = resetKnockoutState();
     addButton.disabled = false;
     nameInput.disabled = false;
     nameInput.value = '';
@@ -316,6 +357,8 @@ function resetDraw() {
     refreshUI();
     resetMatchControls();
     updateUndoState();
+    hideKnockoutStage();
+    updateKnockoutButtonState();
 }
 
 function populateGroupOptions() {
@@ -395,11 +438,7 @@ function updateStandings() {
         header.appendChild(badge);
         card.appendChild(header);
 
-        const players = group.slots.filter(Boolean).sort((a, b) => {
-            if (b.points !== a.points) return b.points - a.points;
-            if (b.diff !== a.diff) return b.diff - a.diff;
-            return a.name.localeCompare(b.name);
-        });
+        const players = getOrderedPlayers(group);
 
         if (!players.length) {
             const empty = document.createElement('p');
@@ -437,6 +476,285 @@ function updateStandings() {
     });
 
     standingsContainer.appendChild(grid);
+}
+
+function canStartKnockoutStage() {
+    const hasMatches = matchQueue.length > 0;
+    const allMatchesRecorded = hasMatches && currentMatchIndex >= matchQueue.length;
+    const enoughPlayersPerGroup = GROUPS.every((group) => getOrderedPlayers(group).length >= 2);
+    return hasMatches && allMatchesRecorded && enoughPlayersPerGroup;
+}
+
+function updateKnockoutButtonState() {
+    if (!playFinalsButton || !finalStageHelper) return;
+
+    if (knockoutState.started) {
+        playFinalsButton.disabled = true;
+        finalStageHelper.textContent = 'Elegí los ganadores para avanzar hasta la final.';
+        return;
+    }
+
+    const canStart = canStartKnockoutStage();
+    playFinalsButton.disabled = !canStart;
+    finalStageHelper.textContent = canStart
+        ? '¡Listo! Jugá la última fase para definir al campeón.'
+        : 'Tenés que completar todos los partidos de grupos para habilitarla.';
+}
+
+function buildInitialKnockoutState() {
+    const rankings = GROUPS.map((group) => getOrderedPlayers(group));
+    return {
+        started: true,
+        quarters: [
+            createKnockoutMatch('E', 'Grupo E', rankings[0][0], rankings[1][1]),
+            createKnockoutMatch('F', 'Grupo F', rankings[1][0], rankings[0][1]),
+            createKnockoutMatch('G', 'Grupo G', rankings[2][0], rankings[3][1]),
+            createKnockoutMatch('H', 'Grupo H', rankings[3][0], rankings[2][1]),
+        ],
+        semis: [
+            createKnockoutMatch('S1', 'Semifinal 1'),
+            createKnockoutMatch('S2', 'Semifinal 2'),
+        ],
+        thirdPlace: createKnockoutMatch('THIRD', 'Partido por el tercer puesto'),
+        final: createKnockoutMatch('FINAL', 'Final'),
+        podium: null,
+    };
+}
+
+function startKnockoutStage() {
+    if (!canStartKnockoutStage()) return;
+
+    knockoutState = buildInitialKnockoutState();
+    updateSemifinalsFromQuarters();
+    updateFinalsFromSemis();
+    renderKnockoutStage();
+    updateKnockoutButtonState();
+}
+
+function hideKnockoutStage() {
+    if (knockoutStage) {
+        knockoutStage.hidden = true;
+    }
+    if (quarterMatchesContainer) quarterMatchesContainer.innerHTML = '';
+    if (semiMatchesContainer) semiMatchesContainer.innerHTML = '';
+    if (thirdPlaceContainer) thirdPlaceContainer.innerHTML = '';
+    if (finalMatchContainer) finalMatchContainer.innerHTML = '';
+    if (podiumElement) {
+        podiumElement.hidden = true;
+    }
+    if (podiumText) {
+        podiumText.textContent = '';
+    }
+}
+
+function renderKnockoutStage() {
+    if (!knockoutStage) return;
+    if (!knockoutState.started) {
+        hideKnockoutStage();
+        return;
+    }
+
+    knockoutStage.hidden = false;
+    renderKnockoutMatches(quarterMatchesContainer, knockoutState.quarters, 'quarters');
+    renderKnockoutMatches(semiMatchesContainer, knockoutState.semis, 'semis');
+    renderKnockoutMatches(thirdPlaceContainer, [knockoutState.thirdPlace], 'thirdPlace');
+    renderKnockoutMatches(finalMatchContainer, [knockoutState.final], 'final');
+    updatePodiumView();
+}
+
+function renderKnockoutMatches(container, matches, stageKey) {
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!matches || !matches.length) {
+        const empty = document.createElement('p');
+        empty.className = 'knockout-empty';
+        empty.textContent = 'Esperando clasificados.';
+        container.appendChild(empty);
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    matches.forEach((match) => {
+        if (!match) return;
+        fragment.appendChild(createKnockoutMatchElement(match, stageKey));
+    });
+
+    if (!fragment.childNodes.length) {
+        const empty = document.createElement('p');
+        empty.className = 'knockout-empty';
+        empty.textContent = 'Esperando clasificados.';
+        container.appendChild(empty);
+        return;
+    }
+
+    container.appendChild(fragment);
+}
+
+function createKnockoutMatchElement(match, stageKey) {
+    const article = document.createElement('article');
+    article.className = 'knockout-match';
+
+    const header = document.createElement('header');
+    const title = document.createElement('span');
+    title.textContent = match.label;
+    header.appendChild(title);
+    if (match.id) {
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = match.id;
+        header.appendChild(badge);
+    }
+    article.appendChild(header);
+
+    const playersWrapper = document.createElement('div');
+    playersWrapper.className = 'knockout-players';
+    const players = Array.isArray(match.players) ? [...match.players] : [];
+    while (players.length < 2) {
+        players.push(null);
+    }
+
+    players.forEach((player, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'knockout-player';
+        button.textContent = player ? player.name : 'Pendiente';
+        button.disabled = !player;
+        button.dataset.stage = stageKey;
+        button.dataset.matchId = match.id;
+        button.dataset.playerIndex = String(index);
+
+        if (typeof match.winnerIndex === 'number') {
+            if (match.winnerIndex === index) {
+                button.classList.add('is-winner');
+            } else if (match.players[match.winnerIndex]) {
+                button.classList.add('is-loser');
+            }
+        }
+
+        playersWrapper.appendChild(button);
+    });
+
+    article.appendChild(playersWrapper);
+    return article;
+}
+
+function handleKnockoutSelection(event) {
+    const target = event.target.closest('.knockout-player');
+    if (!target || target.disabled) return;
+
+    const { stage, matchId, playerIndex } = target.dataset;
+    if (!stage || !matchId) return;
+    registerKnockoutWinner(stage, matchId, Number(playerIndex));
+}
+
+function findMatchById(matches, id) {
+    return matches.find((match) => match && match.id === id);
+}
+
+function getMatchWinner(match) {
+    if (!match || typeof match.winnerIndex !== 'number') return null;
+    return match.players?.[match.winnerIndex] || null;
+}
+
+function getMatchLoser(match) {
+    if (!match || typeof match.winnerIndex !== 'number') return null;
+    const loserIndex = match.winnerIndex === 0 ? 1 : 0;
+    return match.players?.[loserIndex] || null;
+}
+
+function updateMatchPlayers(match, playerOne, playerTwo) {
+    if (!match) return;
+    const nextPlayers = [playerOne || null, playerTwo || null];
+    const currentPlayers = match.players || [];
+    const hasChanged = currentPlayers[0] !== nextPlayers[0] || currentPlayers[1] !== nextPlayers[1];
+    match.players = nextPlayers;
+    if (hasChanged) {
+        match.winnerIndex = null;
+    }
+}
+
+function updateSemifinalsFromQuarters() {
+    if (!knockoutState.started) return;
+    const matchE = findMatchById(knockoutState.quarters, 'E');
+    const matchF = findMatchById(knockoutState.quarters, 'F');
+    const matchG = findMatchById(knockoutState.quarters, 'G');
+    const matchH = findMatchById(knockoutState.quarters, 'H');
+
+    updateMatchPlayers(knockoutState.semis[0], getMatchWinner(matchE), getMatchWinner(matchG));
+    updateMatchPlayers(knockoutState.semis[1], getMatchWinner(matchF), getMatchWinner(matchH));
+}
+
+function updateFinalsFromSemis() {
+    if (!knockoutState.started) return;
+    const semiOne = knockoutState.semis[0];
+    const semiTwo = knockoutState.semis[1];
+
+    updateMatchPlayers(knockoutState.final, getMatchWinner(semiOne), getMatchWinner(semiTwo));
+    updateMatchPlayers(knockoutState.thirdPlace, getMatchLoser(semiOne), getMatchLoser(semiTwo));
+}
+
+function updatePodiumView() {
+    if (!podiumElement || !podiumText) return;
+    if (!knockoutState.started) {
+        podiumElement.hidden = true;
+        podiumText.textContent = '';
+        return;
+    }
+
+    const champion = getMatchWinner(knockoutState.final);
+    const runnerUp = getMatchLoser(knockoutState.final);
+    const thirdPlaceWinner = getMatchWinner(knockoutState.thirdPlace);
+
+    if (champion && runnerUp && thirdPlaceWinner) {
+        podiumElement.hidden = false;
+        podiumText.innerHTML = '';
+        const fragment = document.createDocumentFragment();
+        fragment.append('🏆 Felicitaciones a ');
+        const championStrong = document.createElement('strong');
+        championStrong.textContent = champion.name;
+        fragment.append(championStrong, ' por salir campeón. ');
+        const runnerUpStrong = document.createElement('strong');
+        runnerUpStrong.textContent = runnerUp.name;
+        fragment.append(runnerUpStrong, ' se queda con el segundo puesto y ');
+        const thirdStrong = document.createElement('strong');
+        thirdStrong.textContent = thirdPlaceWinner.name;
+        fragment.append(thirdStrong, ' suma el tercer lugar.');
+        podiumText.appendChild(fragment);
+    } else {
+        podiumElement.hidden = true;
+        podiumText.textContent = '';
+    }
+}
+
+function registerKnockoutWinner(stageKey, matchId, playerIndex) {
+    if (!knockoutState.started) return;
+
+    let collection = [];
+    if (stageKey === 'quarters') {
+        collection = knockoutState.quarters;
+    } else if (stageKey === 'semis') {
+        collection = knockoutState.semis;
+    } else if (stageKey === 'thirdPlace') {
+        collection = [knockoutState.thirdPlace];
+    } else if (stageKey === 'final') {
+        collection = [knockoutState.final];
+    }
+
+    const match = findMatchById(collection, matchId);
+    if (!match) return;
+    if (!match.players?.[playerIndex]) return;
+
+    match.winnerIndex = playerIndex;
+
+    if (stageKey === 'quarters') {
+        updateSemifinalsFromQuarters();
+        updateFinalsFromSemis();
+    } else if (stageKey === 'semis') {
+        updateFinalsFromSemis();
+    }
+
+    renderKnockoutStage();
 }
 
 function rebuildMatchQueue() {
@@ -492,6 +810,7 @@ function updateUndoState() {
 }
 
 function updateMatchUI() {
+    updateKnockoutButtonState();
     const match = matchQueue[currentMatchIndex];
     const availableMatch = Boolean(match);
 
@@ -625,6 +944,12 @@ if (manualToggleButton) {
 }
 if (manualGroupSelect) {
     manualGroupSelect.addEventListener('change', populateManualPositionOptions);
+}
+if (playFinalsButton) {
+    playFinalsButton.addEventListener('click', startKnockoutStage);
+}
+if (knockoutStage) {
+    knockoutStage.addEventListener('click', handleKnockoutSelection);
 }
 diffInput.addEventListener('input', () => {
     diffValue.textContent = diffInput.value;
