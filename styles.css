@@ -836,6 +836,101 @@ body {
     line-height: 1.5;
 }
 
+.performance-tools {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#show-performance {
+    align-self: flex-start;
+    border: none;
+    border-radius: 999px;
+    padding: 0.7rem 1.6rem;
+    font-weight: 600;
+    background: var(--accent);
+    color: #05060f;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#show-performance:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 25px rgba(143, 123, 255, 0.35);
+}
+
+.performance-board {
+    width: 100%;
+    background: rgba(5, 8, 22, 0.85);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 1rem;
+}
+
+.performance-board__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.performance-board__helper {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+#close-performance {
+    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-strong);
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+#close-performance:hover {
+    background: rgba(255, 255, 255, 0.16);
+    transform: translateY(-1px);
+}
+
+.performance-table-wrapper {
+    overflow-x: auto;
+}
+
+.performance-board table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.performance-board th,
+.performance-board td {
+    text-align: left;
+    padding: 0.6rem 0.4rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.performance-board th {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.performance-board tbody tr:first-child td {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.performance-board tbody tr.highlight td {
+    color: var(--success);
+    font-weight: 700;
+}
+
 .note {
     text-align: center;
     margin-top: 2rem;
