@@ -55,8 +55,16 @@
 
         <section class="matches" id="matches-panel">
             <div class="matches__header">
-                <h2>Enfrentamientos</h2>
-                <p>Los partidos aparecen de a uno siguiendo el orden solicitado.</p>
+                <div class="matches__title">
+                    <h2>Enfrentamientos</h2>
+                    <p>Los partidos aparecen de a uno siguiendo el orden solicitado.</p>
+                </div>
+                <div class="matches__undo-wrapper">
+                    <button id="undo-arrow" type="button" class="matches__undo-icon" aria-label="Volver al partido anterior" disabled>
+                        <span aria-hidden="true">↺</span>
+                    </button>
+                    <button id="undo-match" type="button" class="matches__undo" disabled>Deshacer resultado</button>
+                </div>
             </div>
             <div class="match-display">
                 <p id="current-match-label">Cargá participantes para comenzar los partidos.</p>
