@@ -592,6 +592,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.75rem;
     color: var(--text-muted);
     font-weight: 500;
     transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
@@ -602,6 +603,40 @@ body {
     border-style: solid;
     border-color: var(--group-slot-border);
     color: var(--text-strong);
+}
+
+.slot-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.slot-name {
+    font-weight: 600;
+    color: inherit;
+}
+
+.slot-remove {
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: transparent;
+    color: var(--text-muted);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.slot-remove:hover,
+.slot-remove:focus-visible {
+    background: rgba(255, 107, 129, 0.18);
+    border-color: rgba(255, 107, 129, 0.5);
+    color: #ff9bad;
+    outline: none;
+    transform: translateY(-1px);
 }
 
 .group-card--a {
