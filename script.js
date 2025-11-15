@@ -281,29 +281,24 @@ function updateStandings() {
 }
 
 function rebuildMatchQueue() {
-    const maxSlots = Math.max(...GROUPS.map((group) => group.slots.length));
-    if (!Number.isFinite(maxSlots)) {
-        matchQueue = [];
-        currentMatchIndex = 0;
-        updateMatchUI();
-        return;
-    }
-
     const newQueue = [];
-    for (let opponentIndex = 1; opponentIndex < maxSlots; opponentIndex += 1) {
-        GROUPS.forEach((group, groupIndex) => {
-            if (opponentIndex >= group.slots.length) return;
-            const playerOne = group.slots[0];
-            const opponent = group.slots[opponentIndex];
-            if (playerOne && opponent) {
-                newQueue.push({
-                    groupIndex,
-                    homeIndex: 0,
-                    awayIndex: opponentIndex,
-                });
+
+    GROUPS.forEach((group, groupIndex) => {
+        for (let homeIndex = 0; homeIndex < group.slots.length - 1; homeIndex += 1) {
+            for (let awayIndex = homeIndex + 1; awayIndex < group.slots.length; awayIndex += 1) {
+                const playerOne = group.slots[homeIndex];
+                const playerTwo = group.slots[awayIndex];
+
+                if (playerOne && playerTwo) {
+                    newQueue.push({
+                        groupIndex,
+                        homeIndex,
+                        awayIndex,
+                    });
+                }
             }
-        });
-    }
+        }
+    });
 
     matchQueue = newQueue;
     currentMatchIndex = 0;
