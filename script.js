@@ -54,6 +54,16 @@ function createPlayer(name) {
     return { name, points: 0, diff: 0 };
 }
 
+function resetAllPlayerStats() {
+    GROUPS.forEach((group) => {
+        group.slots.forEach((slot) => {
+            if (!slot) return;
+            slot.points = 0;
+            slot.diff = 0;
+        });
+    });
+}
+
 function getSlotLabel(slot) {
     return slot?.name || '—';
 }
@@ -400,6 +410,7 @@ function removeParticipantFromSlot(groupIndex, slotIndex) {
     currentMatchIndex = 0;
     knockoutState = resetKnockoutState();
     hideKnockoutStage();
+    resetAllPlayerStats();
 
     refreshUI();
     rebuildMatchQueue();
