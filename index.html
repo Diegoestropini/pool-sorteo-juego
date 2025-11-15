@@ -53,6 +53,32 @@
             <!-- Los grupos se crean dinámicamente -->
         </section>
 
+        <section class="matches" id="matches-panel">
+            <div class="matches__header">
+                <h2>Enfrentamientos</h2>
+                <p>Los partidos aparecen de a uno siguiendo el orden solicitado.</p>
+            </div>
+            <div class="match-display">
+                <p id="current-match-label">Cargá participantes para comenzar los partidos.</p>
+                <div class="match-players" aria-live="polite">
+                    <button id="match-player-a" class="match-player" type="button" disabled>Jugador A</button>
+                    <span class="vs">vs</span>
+                    <button id="match-player-b" class="match-player" type="button" disabled>Jugador B</button>
+                </div>
+                <div class="match-diff">
+                    <label for="diff-input">Diferencia de bolas</label>
+                    <input type="range" id="diff-input" min="0" max="7" value="0">
+                    <output id="diff-value">0</output>
+                </div>
+                <p id="matches-remaining">No hay partidos generados.</p>
+            </div>
+        </section>
+
+        <section class="standings" id="standings-panel">
+            <h2>Posiciones en tiempo real</h2>
+            <div id="standings-container" aria-live="polite"></div>
+        </section>
+
         <p class="note">Consejo: compartí la pantalla para que todos sigan el sorteo en tiempo real ✨</p>
     </div>
 
