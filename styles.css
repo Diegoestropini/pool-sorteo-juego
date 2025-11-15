@@ -37,20 +37,43 @@ body {
     backdrop-filter: blur(12px);
 }
 
-header {
+.app-header {
     text-align: center;
     margin-bottom: 2rem;
 }
 
-header h1 {
+.app-header h1 {
     font-size: clamp(1.8rem, 2.8vw, 2.8rem);
     margin-bottom: 0.4rem;
 }
 
-header p {
+.app-header p {
     margin: 0;
     color: var(--text-muted);
     font-size: 1rem;
+}
+
+.header-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.8rem;
+}
+
+.header-actions button {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: var(--text-strong);
+    font-weight: 600;
+    padding: 0.6rem 1.4rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.header-actions button:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-1px);
 }
 
 .controls {
