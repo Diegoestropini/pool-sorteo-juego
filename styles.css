@@ -916,6 +916,22 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.performance-points-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.performance-bonus {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(143, 123, 255, 0.2);
+    border-radius: 999px;
+    padding: 0.05rem 0.5rem;
+    line-height: 1.2;
+}
+
 .performance-board th {
     color: var(--text-muted);
     font-weight: 600;
