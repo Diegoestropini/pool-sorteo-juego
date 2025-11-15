@@ -1,0 +1,214 @@
+:root {
+    color-scheme: light;
+    font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --bg: radial-gradient(circle at top, #f3f2ff, #fefefe 45%);
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --card-border: rgba(86, 74, 226, 0.25);
+    --accent: #5747f2;
+    --accent-soft: rgba(87, 71, 242, 0.1);
+    --text-strong: #1d1c39;
+    --text-muted: #57556f;
+    --success: #23c483;
+    --warning: #ffb347;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.app-shell {
+    width: min(1100px, 100%);
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 28px;
+    padding: clamp(1.5rem, 2vw, 2.75rem);
+    box-shadow: 0 25px 80px rgba(87, 71, 242, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+}
+
+header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+header h1 {
+    font-size: clamp(1.8rem, 2.8vw, 2.8rem);
+    margin-bottom: 0.4rem;
+}
+
+header p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+.controls {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.controls label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.input-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.input-row input {
+    flex: 1;
+    padding: 0.9rem 1.1rem;
+    font-size: 1rem;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.8);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-row input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.input-row button {
+    border: none;
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+    padding: 0.95rem 1.8rem;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-row button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.input-row button:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(87, 71, 242, 0.3);
+}
+
+#helper-text {
+    margin-top: 0.75rem;
+    color: var(--text-muted);
+}
+
+.groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+}
+
+.group-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 12px 30px rgba(29, 28, 57, 0.08);
+    min-height: 230px;
+    display: flex;
+    flex-direction: column;
+}
+
+.group-card header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.group-card h2 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.group-card ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    flex: 1;
+}
+
+.group-card li {
+    padding: 0.7rem 0.9rem;
+    border-radius: 14px;
+    background: rgba(87, 71, 242, 0.06);
+    border: 1px dashed rgba(87, 71, 242, 0.3);
+    min-height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--text-muted);
+    font-weight: 500;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+.group-card li.filled {
+    background: white;
+    border-style: solid;
+    color: var(--text-strong);
+}
+
+.group-card li .position-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.note {
+    text-align: center;
+    margin-top: 2rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: 1rem;
+    }
+
+    .app-shell {
+        border-radius: 20px;
+    }
+
+    .input-row button,
+    .input-row input {
+        width: 100%;
+    }
+}
