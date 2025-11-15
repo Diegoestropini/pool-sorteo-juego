@@ -101,6 +101,56 @@ body {
     margin-bottom: 0.75rem;
 }
 
+.manual-entry {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#toggle-manual-entry {
+    align-self: flex-start;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: var(--text-strong);
+    font-weight: 600;
+    padding: 0.6rem 1.4rem;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+#toggle-manual-entry.is-active {
+    background: rgba(35, 196, 131, 0.15);
+    color: #23c483;
+    border-color: rgba(35, 196, 131, 0.55);
+    transform: translateY(-1px);
+}
+
+.manual-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.manual-field select {
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(10, 12, 28, 0.9);
+    color: var(--text-strong);
+    padding: 0.8rem 1rem;
+}
+
+.manual-helper-text {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
 .edit-panel {
     display: none;
     background: var(--card-bg);
@@ -477,11 +527,15 @@ body {
 }
 
 .group-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
+    --group-color: #8f7bff;
+    --group-chip-bg: rgba(143, 123, 255, 0.2);
+    --group-slot-bg: rgba(143, 123, 255, 0.08);
+    --group-slot-border: rgba(143, 123, 255, 0.4);
+    background: linear-gradient(160deg, rgba(8, 10, 30, 0.9), rgba(5, 7, 21, 0.85));
+    border: 1px solid var(--group-slot-border);
     border-radius: 20px;
     padding: 1.5rem;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.5);
     min-height: 230px;
     display: flex;
     flex-direction: column;
@@ -492,11 +546,18 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--group-slot-border);
 }
 
 .group-card h2 {
     margin: 0;
     font-size: 1.3rem;
+}
+
+.group-card .badge {
+    background: var(--group-chip-bg);
+    color: var(--group-color);
 }
 
 .badge {
@@ -524,8 +585,8 @@ body {
 .group-card li {
     padding: 0.7rem 0.9rem;
     border-radius: 14px;
-    background: rgba(143, 123, 255, 0.08);
-    border: 1px dashed rgba(143, 123, 255, 0.4);
+    background: var(--group-slot-bg);
+    border: 1px dashed var(--group-slot-border);
     min-height: 45px;
     display: flex;
     align-items: center;
@@ -538,8 +599,36 @@ body {
 .group-card li.filled {
     background: rgba(2, 6, 20, 0.95);
     border-style: solid;
-    border-color: rgba(255, 255, 255, 0.18);
+    border-color: var(--group-slot-border);
     color: var(--text-strong);
+}
+
+.group-card--a {
+    --group-color: #9f8cff;
+    --group-chip-bg: rgba(159, 140, 255, 0.25);
+    --group-slot-bg: rgba(159, 140, 255, 0.12);
+    --group-slot-border: rgba(159, 140, 255, 0.45);
+}
+
+.group-card--b {
+    --group-color: #2dd4bf;
+    --group-chip-bg: rgba(45, 212, 191, 0.2);
+    --group-slot-bg: rgba(45, 212, 191, 0.12);
+    --group-slot-border: rgba(45, 212, 191, 0.45);
+}
+
+.group-card--c {
+    --group-color: #f8c04b;
+    --group-chip-bg: rgba(248, 192, 75, 0.25);
+    --group-slot-bg: rgba(248, 192, 75, 0.14);
+    --group-slot-border: rgba(248, 192, 75, 0.45);
+}
+
+.group-card--d {
+    --group-color: #fb7185;
+    --group-chip-bg: rgba(251, 113, 133, 0.22);
+    --group-slot-bg: rgba(251, 113, 133, 0.12);
+    --group-slot-border: rgba(251, 113, 133, 0.45);
 }
 
 .group-card li .position-label {

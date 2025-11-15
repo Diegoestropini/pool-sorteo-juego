@@ -27,6 +27,20 @@
                 <button id="add-participant">Anotar</button>
             </div>
             <p id="helper-text">Quedan <span id="slots-remaining">12</span> lugares disponibles.</p>
+            <div class="manual-entry">
+                <button id="toggle-manual-entry" type="button" aria-pressed="false">Asignación manual desactivada</button>
+                <div id="manual-fields" class="manual-fields" hidden>
+                    <div class="manual-field">
+                        <label for="manual-group-select">Grupo</label>
+                        <select id="manual-group-select"></select>
+                    </div>
+                    <div class="manual-field">
+                        <label for="manual-position-select">Posición</label>
+                        <select id="manual-position-select"></select>
+                    </div>
+                    <p id="manual-helper-text" class="manual-helper-text">Elegí el grupo y la posición para ubicar manualmente a la persona.</p>
+                </div>
+            </div>
         </section>
 
         <section class="edit-panel" id="edit-panel" aria-hidden="true">
