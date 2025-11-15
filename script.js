@@ -926,7 +926,13 @@ nameInput.addEventListener('keyup', (event) => {
         addParticipant();
     }
 });
-resetButton.addEventListener('click', resetDraw);
+resetButton.addEventListener('click', () => {
+    const shouldReset = window.confirm('¿Estás seguro de que querés reiniciar? Elegí Sí o No.');
+    if (!shouldReset) {
+        return;
+    }
+    resetDraw();
+});
 editButton.addEventListener('click', openEditPanel);
 closeEditPanel.addEventListener('click', closeEditPanelView);
 addSlotButton.addEventListener('click', addSlotToGroup);
