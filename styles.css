@@ -57,6 +57,8 @@ body {
     display: flex;
     justify-content: flex-end;
     margin-bottom: 0.8rem;
+    flex-wrap: wrap;
+    gap: 0.6rem;
 }
 
 .header-actions button {
@@ -70,10 +72,19 @@ body {
     transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
+#close-edit-panel:hover,
 .header-actions button:hover {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.4);
     transform: translateY(-1px);
+}
+
+.header-actions button#edit-groups {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.header-actions button#edit-groups:hover {
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .controls {
@@ -88,6 +99,107 @@ body {
     font-weight: 600;
     display: block;
     margin-bottom: 0.75rem;
+}
+
+.edit-panel {
+    display: none;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.edit-panel.is-visible {
+    display: block;
+}
+
+.edit-panel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.edit-panel__header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.edit-panel__header p {
+    margin: 0.4rem 0 0;
+    color: var(--text-muted);
+}
+
+#close-edit-panel {
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-strong);
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.edit-panel label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+#group-select {
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(10, 12, 28, 0.9);
+    color: var(--text-strong);
+    padding: 0.85rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.edit-panel__actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.edit-panel__actions button {
+    flex: 1;
+    min-width: 180px;
+    border-radius: 16px;
+    border: none;
+    padding: 0.9rem 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.edit-panel__actions button#add-slot {
+    background: var(--accent);
+    color: #0e0820;
+}
+
+.edit-panel__actions button.ghost {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-strong);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.edit-panel__actions button:hover {
+    transform: translateY(-1px);
+}
+
+.edit-panel__feedback {
+    margin-top: 1rem;
+    color: var(--success);
+    font-weight: 600;
+}
+
+.edit-panel__feedback.is-error {
+    color: var(--warning);
 }
 
 .input-row {

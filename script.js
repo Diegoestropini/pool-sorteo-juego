@@ -12,11 +12,23 @@ const slotsRemaining = document.getElementById('slots-remaining');
 const groupsContainer = document.getElementById('groups-container');
 const template = document.getElementById('group-template');
 const resetButton = document.getElementById('reset-draw');
+const editButton = document.getElementById('edit-groups');
+const editPanel = document.getElementById('edit-panel');
+const closeEditPanel = document.getElementById('close-edit-panel');
+const groupSelect = document.getElementById('group-select');
+const addSlotButton = document.getElementById('add-slot');
+const removeSlotButton = document.getElementById('remove-slot');
+const editFeedback = document.getElementById('edit-feedback');
 
 let totalParticipants = 0;
 
-function initGroups() {
+function getTotalCapacity() {
+    return GROUPS.reduce((sum, group) => sum + group.slots.length, 0);
+}
+
+function renderGroups() {
     const fragment = document.createDocumentFragment();
+    groupsContainer.innerHTML = '';
 
     GROUPS.forEach((group, index) => {
         const clone = template.content.cloneNode(true);
@@ -26,10 +38,17 @@ function initGroups() {
         card.querySelector('h2').textContent = group.name;
         card.querySelector('.badge').textContent = String.fromCharCode(65 + index);
 
-        const slots = card.querySelectorAll('li');
-        slots.forEach((slot, slotIndex) => {
-            slot.dataset.slotIndex = slotIndex;
-            slot.innerHTML = `<span>${slot.textContent}</span><span class="position-label">Posición ${slotIndex + 1}</span>`;
+        const list = card.querySelector('ol');
+        list.innerHTML = '';
+
+        group.slots.forEach((name, slotIndex) => {
+            const slotElement = document.createElement('li');
+            slotElement.dataset.slotIndex = slotIndex;
+            if (name) {
+                slotElement.classList.add('filled');
+            }
+            slotElement.innerHTML = `<span>${name || '—'}</span><span class="position-label">Posición ${slotIndex + 1}</span>`;
+            list.appendChild(slotElement);
         });
 
         fragment.appendChild(clone);
@@ -38,34 +57,27 @@ function initGroups() {
     groupsContainer.appendChild(fragment);
 }
 
-function updateSlotsUI() {
-    GROUPS.forEach((group, groupIndex) => {
-        group.slots.forEach((name, slotIndex) => {
-            const selector = `.group-card[data-group-index="${groupIndex}"] li[data-slot-index="${slotIndex}"]`;
-            const slotElement = document.querySelector(selector);
-
-            if (!slotElement) return;
-
-            if (name) {
-                slotElement.classList.add('filled');
-                slotElement.innerHTML = `<span>${name}</span><span class="position-label">Posición ${slotIndex + 1}</span>`;
-            } else {
-                slotElement.classList.remove('filled');
-                slotElement.innerHTML = `<span>—</span><span class="position-label">Posición ${slotIndex + 1}</span>`;
-            }
-        });
-    });
-
-    const remaining = 12 - totalParticipants;
+function updateCapacityUI() {
+    const capacity = getTotalCapacity();
+    const remaining = capacity - totalParticipants;
     slotsRemaining.textContent = remaining;
 
     if (remaining === 0) {
         helperText.textContent = '¡Todos los grupos están completos!';
-        addButton.disabled = true;
-        nameInput.disabled = true;
+    } else if (remaining === 1) {
+        helperText.textContent = 'Queda 1 lugar disponible.';
     } else {
         helperText.textContent = `Quedan ${remaining} lugares disponibles.`;
     }
+
+    const shouldDisableInputs = remaining === 0;
+    addButton.disabled = shouldDisableInputs;
+    nameInput.disabled = shouldDisableInputs;
+}
+
+function refreshUI() {
+    renderGroups();
+    updateCapacityUI();
 }
 
 function addParticipant() {
@@ -75,7 +87,7 @@ function addParticipant() {
         return;
     }
 
-    if (totalParticipants >= 12) {
+    if (totalParticipants >= getTotalCapacity()) {
         helperText.textContent = 'El sorteo ya está completo.';
         return;
     }
@@ -98,7 +110,7 @@ function addParticipant() {
 
         if (!availableSlots.length) {
             helperText.textContent = 'Ya no quedan espacios disponibles.';
-            updateSlotsUI();
+            refreshUI();
             return;
         }
 
@@ -107,16 +119,14 @@ function addParticipant() {
     }
 
     totalParticipants += 1;
-    updateSlotsUI();
+    refreshUI();
     nameInput.value = '';
     nameInput.focus();
 }
 
 function resetDraw() {
     GROUPS.forEach((group) => {
-        for (let i = 0; i < group.slots.length; i += 1) {
-            group.slots[i] = null;
-        }
+        group.slots = group.slots.map(() => null);
     });
 
     totalParticipants = 0;
@@ -124,7 +134,63 @@ function resetDraw() {
     nameInput.disabled = false;
     nameInput.value = '';
     nameInput.focus();
-    updateSlotsUI();
+    refreshUI();
+}
+
+function populateGroupOptions() {
+    groupSelect.innerHTML = GROUPS.map((group, index) => `<option value="${index}">${group.name}</option>`).join('');
+}
+
+function setEditFeedback(message, isError = false) {
+    editFeedback.textContent = message;
+    editFeedback.classList.toggle('is-error', Boolean(isError));
+}
+
+function openEditPanel() {
+    populateGroupOptions();
+    editPanel.classList.add('is-visible');
+    editPanel.setAttribute('aria-hidden', 'false');
+    setEditFeedback('');
+}
+
+function closeEditPanelView() {
+    editPanel.classList.remove('is-visible');
+    editPanel.setAttribute('aria-hidden', 'true');
+    setEditFeedback('');
+}
+
+function getSelectedGroup() {
+    const groupIndex = Number(groupSelect.value);
+    return GROUPS[groupIndex];
+}
+
+function addSlotToGroup() {
+    const group = getSelectedGroup();
+    if (!group) return;
+
+    group.slots.push(null);
+    refreshUI();
+    setEditFeedback(`Se agregó una posición al ${group.name}.`);
+}
+
+function removeSlotFromGroup() {
+    const group = getSelectedGroup();
+    if (!group) return;
+
+    if (group.slots.length <= 1) {
+        setEditFeedback('Cada grupo debe tener al menos una posición.', true);
+        return;
+    }
+
+    const lastSlot = group.slots[group.slots.length - 1];
+    if (lastSlot) {
+        setEditFeedback('La última posición está ocupada. Reorganizá antes de quitarla.', true);
+        return;
+    }
+
+    group.slots.pop();
+    refreshUI();
+    setEditFeedback(`Se quitó una posición al ${group.name}.`);
 }
 
 addButton.addEventListener('click', addParticipant);
@@ -134,6 +200,15 @@ nameInput.addEventListener('keyup', (event) => {
     }
 });
 resetButton.addEventListener('click', resetDraw);
+editButton.addEventListener('click', openEditPanel);
+closeEditPanel.addEventListener('click', closeEditPanelView);
+addSlotButton.addEventListener('click', addSlotToGroup);
+removeSlotButton.addEventListener('click', removeSlotFromGroup);
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && editPanel.classList.contains('is-visible')) {
+        closeEditPanelView();
+    }
+});
 
-initGroups();
-updateSlotsUI();
+populateGroupOptions();
+refreshUI();

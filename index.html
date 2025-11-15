@@ -13,6 +13,7 @@
     <div class="app-shell">
         <header class="app-header">
             <div class="header-actions">
+                <button id="edit-groups" type="button">Editar grupos</button>
                 <button id="reset-draw" type="button">Reiniciar</button>
             </div>
             <h1>Sorteo de 12 Participantes</h1>
@@ -26,6 +27,26 @@
                 <button id="add-participant">Anotar</button>
             </div>
             <p id="helper-text">Quedan <span id="slots-remaining">12</span> lugares disponibles.</p>
+        </section>
+
+        <section class="edit-panel" id="edit-panel" aria-hidden="true">
+            <div class="edit-panel__header">
+                <div>
+                    <h2>Editar grupos</h2>
+                    <p>Elegí un grupo para sumar o quitar posiciones según la cantidad de personas presentes.</p>
+                </div>
+                <button id="close-edit-panel" type="button" aria-label="Cerrar panel">&times;</button>
+            </div>
+
+            <label for="group-select">Grupo a modificar</label>
+            <select id="group-select"></select>
+
+            <div class="edit-panel__actions">
+                <button id="add-slot" type="button">Agregar posición</button>
+                <button id="remove-slot" type="button" class="ghost">Quitar posición</button>
+            </div>
+
+            <p id="edit-feedback" class="edit-panel__feedback" aria-live="polite"></p>
         </section>
 
         <section class="groups" id="groups-container">
