@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorteo de Grupos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-shell">
+        <header>
+            <h1>Sorteo de 12 Participantes</h1>
+            <p>El primer nombre se ubica automáticamente en el Grupo A - Posición 1. Los demás aparecerán en grupos al azar.</p>
+        </header>
+
+        <section class="controls">
+            <label for="participant-name">Ingresá un nombre</label>
+            <div class="input-row">
+                <input type="text" id="participant-name" maxlength="40" placeholder="Ej: Camila Pérez" autocomplete="off">
+                <button id="add-participant">Anotar</button>
+            </div>
+            <p id="helper-text">Quedan <span id="slots-remaining">12</span> lugares disponibles.</p>
+        </section>
+
+        <section class="groups" id="groups-container">
+            <!-- Los grupos se crean dinámicamente -->
+        </section>
+
+        <p class="note">Consejo: compartí la pantalla para que todos sigan el sorteo en tiempo real ✨</p>
+    </div>
+
+    <template id="group-template">
+        <article class="group-card">
+            <header>
+                <h2>Grupo</h2>
+                <span class="badge">A</span>
+            </header>
+            <ol>
+                <li data-position="1">—</li>
+                <li data-position="2">—</li>
+                <li data-position="3">—</li>
+            </ol>
+        </article>
+    </template>
+
+    <script src="script.js" defer></script>
+</body>
+</html>
