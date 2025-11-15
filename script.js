@@ -5,6 +5,14 @@ const GROUPS = [
     { name: 'Grupo D', slots: [null, null, null] }
 ];
 
+const PERFORMANCE_BONUS_CONFIG = Object.freeze({
+    minimumQualificationBonus: 3,
+    quarterWin: 1,
+    semifinalWin: 2,
+    finalWin: 3,
+    thirdPlaceWin: 1,
+});
+
 const nameInput = document.getElementById('participant-name');
 const addButton = document.getElementById('add-participant');
 const helperText = document.getElementById('helper-text');
@@ -787,29 +795,93 @@ function updatePodiumView() {
     }
 }
 
+function getQualificationBonusValue(players) {
+    if (!players.length) {
+        return PERFORMANCE_BONUS_CONFIG.minimumQualificationBonus;
+    }
+    const maxPoints = Math.max(...players.map((player) => player.points));
+    return Math.max(PERFORMANCE_BONUS_CONFIG.minimumQualificationBonus, maxPoints + 1);
+}
+
+function addPerformanceBonus(bonusesMap, player, value) {
+    if (!player || !Number.isFinite(value)) return;
+    const current = bonusesMap.get(player) || 0;
+    bonusesMap.set(player, current + value);
+}
+
+function getKnockoutPerformanceBonuses(players) {
+    const bonuses = new Map();
+    if (!knockoutState.started) {
+        return bonuses;
+    }
+
+    const qualificationBonus = getQualificationBonusValue(players);
+
+    knockoutState.quarters.forEach((match) => {
+        if (!match) return;
+        if (Array.isArray(match.players)) {
+            match.players.forEach((player) => addPerformanceBonus(bonuses, player, qualificationBonus));
+        }
+        const winner = getMatchWinner(match);
+        if (winner) {
+            addPerformanceBonus(bonuses, winner, PERFORMANCE_BONUS_CONFIG.quarterWin);
+        }
+    });
+
+    knockoutState.semis.forEach((match) => {
+        if (!match) return;
+        const winner = getMatchWinner(match);
+        if (winner) {
+            addPerformanceBonus(bonuses, winner, PERFORMANCE_BONUS_CONFIG.semifinalWin);
+        }
+    });
+
+    const champion = getMatchWinner(knockoutState.final);
+    if (champion) {
+        addPerformanceBonus(bonuses, champion, PERFORMANCE_BONUS_CONFIG.finalWin);
+    }
+
+    const thirdPlaceWinner = getMatchWinner(knockoutState.thirdPlace);
+    if (thirdPlaceWinner) {
+        addPerformanceBonus(bonuses, thirdPlaceWinner, PERFORMANCE_BONUS_CONFIG.thirdPlaceWin);
+    }
+
+    return bonuses;
+}
+
 function getPerformanceRanking() {
     const allPlayers = getAllPlayers();
     if (!allPlayers.length) return [];
 
     const champion = getMatchWinner(knockoutState.final);
-    const remainingPlayers = champion
-        ? allPlayers.filter((player) => player !== champion)
-        : [...allPlayers];
+    const bonusMap = getKnockoutPerformanceBonuses(allPlayers);
 
-    remainingPlayers.sort((a, b) => {
-        if (b.points !== a.points) return b.points - a.points;
-        if (b.diff !== a.diff) return b.diff - a.diff;
-        return a.name.localeCompare(b.name);
+    const ranking = allPlayers.map((player) => {
+        const bonusPoints = bonusMap.get(player) || 0;
+        return {
+            player,
+            bonusPoints,
+            totalPoints: player.points + bonusPoints,
+        };
     });
 
-    return champion ? [champion, ...remainingPlayers] : remainingPlayers;
+    ranking.sort((a, b) => {
+        if (champion) {
+            if (a.player === champion) return -1;
+            if (b.player === champion) return 1;
+        }
+        if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+        if (b.player.diff !== a.player.diff) return b.player.diff - a.player.diff;
+        return a.player.name.localeCompare(b.player.name);
+    });
+
+    return ranking;
 }
 
 function renderPerformanceTable() {
     if (!performanceTableBody) return;
 
     const ranking = getPerformanceRanking();
-    const champion = getMatchWinner(knockoutState.final);
     performanceTableBody.innerHTML = '';
 
     if (!ranking.length) {
@@ -822,9 +894,12 @@ function renderPerformanceTable() {
         return;
     }
 
-    ranking.forEach((player, index) => {
+    const champion = getMatchWinner(knockoutState.final);
+
+    ranking.forEach((entry, index) => {
+        const { player, totalPoints, bonusPoints } = entry;
         const row = document.createElement('tr');
-        if (player === champion && index === 0) {
+        if (player === champion) {
             row.classList.add('highlight');
         }
 
@@ -833,7 +908,19 @@ function renderPerformanceTable() {
         const nameCell = document.createElement('td');
         nameCell.textContent = player.name;
         const pointsCell = document.createElement('td');
-        pointsCell.textContent = player.points;
+        pointsCell.classList.add('performance-points-cell');
+        const pointsValue = document.createElement('span');
+        pointsValue.textContent = totalPoints;
+        pointsCell.appendChild(pointsValue);
+
+        if (bonusPoints > 0) {
+            const bonusTag = document.createElement('span');
+            bonusTag.className = 'performance-bonus';
+            bonusTag.textContent = `+${bonusPoints}`;
+            bonusTag.title = 'Bonificación por la etapa final';
+            pointsCell.appendChild(bonusTag);
+        }
+
         const diffCell = document.createElement('td');
         diffCell.textContent = player.diff;
 
