@@ -33,6 +33,7 @@ const matchPlayerBButton = document.getElementById('match-player-b');
 const diffInput = document.getElementById('diff-input');
 const diffValue = document.getElementById('diff-value');
 const matchesRemainingLabel = document.getElementById('matches-remaining');
+const postponeMatchButton = document.getElementById('postpone-match');
 const standingsContainer = document.getElementById('standings-container');
 const undoButton = document.getElementById('undo-match');
 const undoArrowButton = document.getElementById('undo-arrow');
@@ -1051,6 +1052,10 @@ function updateMatchUI() {
     diffInput.disabled = !availableMatch;
     matchPlayerAButton.disabled = !availableMatch;
     matchPlayerBButton.disabled = !availableMatch;
+    if (postponeMatchButton) {
+        const canPostpone = availableMatch && currentMatchIndex < matchQueue.length - 1;
+        postponeMatchButton.disabled = !canPostpone;
+    }
 
     if (!availableMatch) {
         if (!matchQueue.length) {
@@ -1117,6 +1122,17 @@ function registerMatchResult(winnerKey) {
     updateUndoState();
 }
 
+function postponeCurrentMatch() {
+    if (!postponeMatchButton) return;
+    if (currentMatchIndex >= matchQueue.length - 1) return;
+
+    const [postponedMatch] = matchQueue.splice(currentMatchIndex, 1);
+    if (!postponedMatch) return;
+
+    matchQueue.push(postponedMatch);
+    updateMatchUI();
+}
+
 function undoLastMatch() {
     if (!matchHistory.length) return;
 
@@ -1178,6 +1194,9 @@ if (undoButton) {
 }
 if (undoArrowButton) {
     undoArrowButton.addEventListener('click', undoLastMatch);
+}
+if (postponeMatchButton) {
+    postponeMatchButton.addEventListener('click', postponeCurrentMatch);
 }
 if (manualToggleButton) {
     manualToggleButton.addEventListener('click', toggleManualMode);
