@@ -26,10 +26,13 @@ const diffInput = document.getElementById('diff-input');
 const diffValue = document.getElementById('diff-value');
 const matchesRemainingLabel = document.getElementById('matches-remaining');
 const standingsContainer = document.getElementById('standings-container');
+const undoButton = document.getElementById('undo-match');
+const undoArrowButton = document.getElementById('undo-arrow');
 
 let totalParticipants = 0;
 let matchQueue = [];
 let currentMatchIndex = 0;
+let matchHistory = [];
 
 function createPlayer(name) {
     return { name, points: 0, diff: 0 };
@@ -151,12 +154,14 @@ function resetDraw() {
     totalParticipants = 0;
     matchQueue = [];
     currentMatchIndex = 0;
+    matchHistory = [];
     addButton.disabled = false;
     nameInput.disabled = false;
     nameInput.value = '';
     nameInput.focus();
     refreshUI();
     resetMatchControls();
+    updateUndoState();
 }
 
 function populateGroupOptions() {
@@ -285,35 +290,51 @@ function rebuildMatchQueue() {
     if (!Number.isFinite(maxSlots)) {
         matchQueue = [];
         currentMatchIndex = 0;
+        matchHistory = [];
         updateMatchUI();
+        updateUndoState();
         return;
     }
 
     const newQueue = [];
-    for (let opponentIndex = 1; opponentIndex < maxSlots; opponentIndex += 1) {
-        GROUPS.forEach((group, groupIndex) => {
-            if (opponentIndex >= group.slots.length) return;
-            const playerOne = group.slots[0];
-            const opponent = group.slots[opponentIndex];
-            if (playerOne && opponent) {
-                newQueue.push({
-                    groupIndex,
-                    homeIndex: 0,
-                    awayIndex: opponentIndex,
-                });
-            }
-        });
+    for (let homeIndex = 0; homeIndex < maxSlots - 1; homeIndex += 1) {
+        for (let awayIndex = homeIndex + 1; awayIndex < maxSlots; awayIndex += 1) {
+            GROUPS.forEach((group, groupIndex) => {
+                if (homeIndex >= group.slots.length || awayIndex >= group.slots.length) return;
+                const playerOne = group.slots[homeIndex];
+                const opponent = group.slots[awayIndex];
+                if (playerOne && opponent) {
+                    newQueue.push({
+                        groupIndex,
+                        homeIndex,
+                        awayIndex,
+                    });
+                }
+            });
+        }
     }
 
     matchQueue = newQueue;
     currentMatchIndex = 0;
+    matchHistory = [];
     updateMatchUI();
+    updateUndoState();
 }
 
 function resetMatchControls() {
     diffInput.value = 0;
     diffValue.textContent = '0';
     updateMatchUI();
+}
+
+function updateUndoState() {
+    const isDisabled = matchHistory.length === 0;
+    if (undoButton) {
+        undoButton.disabled = isDisabled;
+    }
+    if (undoArrowButton) {
+        undoArrowButton.disabled = isDisabled;
+    }
 }
 
 function updateMatchUI() {
@@ -376,11 +397,54 @@ function registerMatchResult(winnerKey) {
         loser.diff -= diff;
     }
 
+    matchHistory.push({
+        match: { ...match },
+        winnerKey,
+        diff,
+    });
     currentMatchIndex += 1;
     diffInput.value = 0;
     diffValue.textContent = '0';
     updateStandings();
     updateMatchUI();
+    updateUndoState();
+}
+
+function undoLastMatch() {
+    if (!matchHistory.length) return;
+
+    const lastResult = matchHistory.pop();
+    const { match, winnerKey, diff } = lastResult;
+    const group = GROUPS[match.groupIndex];
+    if (!group) {
+        updateUndoState();
+        return;
+    }
+
+    const playerA = group.slots[match.homeIndex];
+    const playerB = group.slots[match.awayIndex];
+    if (!playerA || !playerB) {
+        currentMatchIndex = Math.max(0, currentMatchIndex - 1);
+        updateMatchUI();
+        updateUndoState();
+        return;
+    }
+
+    const winner = winnerKey === 'home' ? playerA : playerB;
+    const loser = winnerKey === 'home' ? playerB : playerA;
+
+    winner.points = Math.max(0, winner.points - 1);
+    if (diff > 0) {
+        winner.diff -= diff;
+        loser.diff += diff;
+    }
+
+    currentMatchIndex = Math.max(0, currentMatchIndex - 1);
+    diffInput.value = diff;
+    diffValue.textContent = String(diff);
+    updateStandings();
+    updateMatchUI();
+    updateUndoState();
 }
 
 addButton.addEventListener('click', addParticipant);
@@ -396,6 +460,12 @@ addSlotButton.addEventListener('click', addSlotToGroup);
 removeSlotButton.addEventListener('click', removeSlotFromGroup);
 matchPlayerAButton.addEventListener('click', () => registerMatchResult('home'));
 matchPlayerBButton.addEventListener('click', () => registerMatchResult('away'));
+if (undoButton) {
+    undoButton.addEventListener('click', undoLastMatch);
+}
+if (undoArrowButton) {
+    undoArrowButton.addEventListener('click', undoLastMatch);
+}
 diffInput.addEventListener('input', () => {
     diffValue.textContent = diffInput.value;
 });
@@ -408,3 +478,4 @@ document.addEventListener('keydown', (event) => {
 populateGroupOptions();
 refreshUI();
 resetMatchControls();
+updateUndoState();
