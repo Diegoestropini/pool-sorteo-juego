@@ -115,7 +115,30 @@ function renderGroups() {
             if (slot) {
                 slotElement.classList.add('filled');
             }
-            slotElement.innerHTML = `<span>${getSlotLabel(slot)}</span><span class="position-label">Posición ${slotIndex + 1}</span>`;
+
+            const slotInfo = document.createElement('div');
+            slotInfo.className = 'slot-info';
+            const slotName = document.createElement('span');
+            slotName.className = 'slot-name';
+            slotName.textContent = getSlotLabel(slot);
+            const positionLabel = document.createElement('span');
+            positionLabel.className = 'position-label';
+            positionLabel.textContent = `Posición ${slotIndex + 1}`;
+            slotInfo.append(slotName, positionLabel);
+            slotElement.appendChild(slotInfo);
+
+            if (slot) {
+                const removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.className = 'slot-remove';
+                removeButton.innerHTML = '&times;';
+                removeButton.setAttribute('aria-label', `Quitar a ${slot.name} del ${group.name}`);
+                removeButton.dataset.action = 'remove-participant';
+                removeButton.dataset.groupIndex = index;
+                removeButton.dataset.slotIndex = slotIndex;
+                slotElement.appendChild(removeButton);
+            }
+
             list.appendChild(slotElement);
         });
 
@@ -359,6 +382,29 @@ function resetDraw() {
     updateUndoState();
     hideKnockoutStage();
     updateKnockoutButtonState();
+}
+
+function removeParticipantFromSlot(groupIndex, slotIndex) {
+    const group = GROUPS[groupIndex];
+    if (!group) return;
+
+    const slot = group.slots[slotIndex];
+    if (!slot) return;
+
+    group.slots[slotIndex] = null;
+    totalParticipants = Math.max(0, totalParticipants - 1);
+    helperText.textContent = `${slot.name} fue eliminado del ${group.name}.`;
+
+    matchHistory = [];
+    matchQueue = [];
+    currentMatchIndex = 0;
+    knockoutState = resetKnockoutState();
+    hideKnockoutStage();
+
+    refreshUI();
+    rebuildMatchQueue();
+    resetMatchControls();
+    updateUndoState();
 }
 
 function populateGroupOptions() {
@@ -956,6 +1002,15 @@ if (playFinalsButton) {
 }
 if (knockoutStage) {
     knockoutStage.addEventListener('click', handleKnockoutSelection);
+}
+if (groupsContainer) {
+    groupsContainer.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-action="remove-participant"]');
+        if (!button) return;
+        const groupIndex = Number(button.dataset.groupIndex);
+        const slotIndex = Number(button.dataset.slotIndex);
+        removeParticipantFromSlot(groupIndex, slotIndex);
+    });
 }
 diffInput.addEventListener('input', () => {
     diffValue.textContent = diffInput.value;
