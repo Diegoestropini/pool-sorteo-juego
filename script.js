@@ -42,6 +42,11 @@ const thirdPlaceContainer = document.getElementById('third-place-match');
 const finalMatchContainer = document.getElementById('final-match');
 const podiumElement = document.getElementById('podium');
 const podiumText = document.getElementById('podium-text');
+const performanceTools = document.getElementById('performance-tools');
+const performanceButton = document.getElementById('show-performance');
+const performancePanel = document.getElementById('performance-board');
+const performanceTableBody = document.getElementById('performance-table-body');
+const closePerformanceButton = document.getElementById('close-performance');
 
 let totalParticipants = 0;
 let matchQueue = [];
@@ -70,6 +75,10 @@ function getOrderedPlayers(group) {
             if (b.diff !== a.diff) return b.diff - a.diff;
             return a.name.localeCompare(b.name);
         });
+}
+
+function getAllPlayers() {
+    return GROUPS.flatMap((group) => group.slots.filter(Boolean));
 }
 
 function createKnockoutMatch(id, label, playerOne = null, playerTwo = null) {
@@ -591,6 +600,10 @@ function hideKnockoutStage() {
     if (podiumText) {
         podiumText.textContent = '';
     }
+    if (performanceTools) {
+        performanceTools.hidden = true;
+    }
+    hidePerformanceBoard();
 }
 
 function renderKnockoutStage() {
@@ -606,6 +619,7 @@ function renderKnockoutStage() {
     renderKnockoutMatches(thirdPlaceContainer, [knockoutState.thirdPlace], 'thirdPlace');
     renderKnockoutMatches(finalMatchContainer, [knockoutState.final], 'final');
     updatePodiumView();
+    updatePerformanceAvailability();
 }
 
 function renderKnockoutMatches(container, matches, stageKey) {
@@ -770,6 +784,93 @@ function updatePodiumView() {
     } else {
         podiumElement.hidden = true;
         podiumText.textContent = '';
+    }
+}
+
+function getPerformanceRanking() {
+    const allPlayers = getAllPlayers();
+    if (!allPlayers.length) return [];
+
+    const champion = getMatchWinner(knockoutState.final);
+    const remainingPlayers = champion
+        ? allPlayers.filter((player) => player !== champion)
+        : [...allPlayers];
+
+    remainingPlayers.sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.diff !== a.diff) return b.diff - a.diff;
+        return a.name.localeCompare(b.name);
+    });
+
+    return champion ? [champion, ...remainingPlayers] : remainingPlayers;
+}
+
+function renderPerformanceTable() {
+    if (!performanceTableBody) return;
+
+    const ranking = getPerformanceRanking();
+    const champion = getMatchWinner(knockoutState.final);
+    performanceTableBody.innerHTML = '';
+
+    if (!ranking.length) {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 4;
+        cell.textContent = 'Todavía no hay datos para mostrar.';
+        row.appendChild(cell);
+        performanceTableBody.appendChild(row);
+        return;
+    }
+
+    ranking.forEach((player, index) => {
+        const row = document.createElement('tr');
+        if (player === champion && index === 0) {
+            row.classList.add('highlight');
+        }
+
+        const positionCell = document.createElement('td');
+        positionCell.textContent = index + 1;
+        const nameCell = document.createElement('td');
+        nameCell.textContent = player.name;
+        const pointsCell = document.createElement('td');
+        pointsCell.textContent = player.points;
+        const diffCell = document.createElement('td');
+        diffCell.textContent = player.diff;
+
+        row.append(positionCell, nameCell, pointsCell, diffCell);
+        performanceTableBody.appendChild(row);
+    });
+}
+
+function showPerformanceBoard() {
+    if (!performancePanel) return;
+    renderPerformanceTable();
+    performancePanel.hidden = false;
+    if (performanceButton) {
+        performanceButton.setAttribute('aria-expanded', 'true');
+    }
+}
+
+function hidePerformanceBoard() {
+    if (!performancePanel) return;
+    performancePanel.hidden = true;
+    if (performanceButton) {
+        performanceButton.setAttribute('aria-expanded', 'false');
+    }
+}
+
+function updatePerformanceAvailability() {
+    const championReady = Boolean(knockoutState.started && getMatchWinner(knockoutState.final));
+    if (performanceTools) {
+        performanceTools.hidden = !championReady;
+    }
+    if (performanceButton) {
+        performanceButton.disabled = !championReady;
+    }
+    if (!championReady) {
+        hidePerformanceBoard();
+    } else if (performancePanel && !performancePanel.hidden) {
+        renderPerformanceTable();
     }
 }
 
@@ -1002,6 +1103,19 @@ if (playFinalsButton) {
 }
 if (knockoutStage) {
     knockoutStage.addEventListener('click', handleKnockoutSelection);
+}
+if (performanceButton) {
+    performanceButton.addEventListener('click', () => {
+        if (!performancePanel) return;
+        if (performancePanel.hidden) {
+            showPerformanceBoard();
+        } else {
+            hidePerformanceBoard();
+        }
+    });
+}
+if (closePerformanceButton) {
+    closePerformanceButton.addEventListener('click', hidePerformanceBoard);
 }
 if (groupsContainer) {
     groupsContainer.addEventListener('click', (event) => {

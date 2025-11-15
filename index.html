@@ -134,6 +134,33 @@
                     <h3>Reconocimientos</h3>
                     <p id="podium-text"></p>
                 </div>
+                <div id="performance-tools" class="performance-tools" hidden>
+                    <button id="show-performance" type="button" aria-controls="performance-board" aria-expanded="false">Lista de desempeño</button>
+                    <div id="performance-board" class="performance-board" hidden>
+                        <div class="performance-board__header">
+                            <h3>Lista de desempeño</h3>
+                            <button id="close-performance" type="button" aria-label="Ocultar lista">&times;</button>
+                        </div>
+                        <p class="performance-board__helper">Ordenamos a todos los jugadores por puntos y diferencia una vez que hay campeón.</p>
+                        <div class="performance-table-wrapper">
+                            <table aria-live="polite">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Pos.</th>
+                                        <th scope="col">Jugador</th>
+                                        <th scope="col">Puntos</th>
+                                        <th scope="col">Dif.</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="performance-table-body">
+                                    <tr>
+                                        <td colspan="4">Todavía no hay datos para mostrar.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
