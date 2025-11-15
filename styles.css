@@ -458,6 +458,33 @@ body {
     font-weight: 700;
 }
 
+.match-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.match-postpone {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: var(--text-strong);
+    font-weight: 600;
+    padding: 0.55rem 1.5rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.match-postpone:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.match-postpone:not(:disabled):hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-1px);
+}
+
 .standings-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
