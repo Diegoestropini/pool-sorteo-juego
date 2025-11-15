@@ -11,6 +11,7 @@ const helperText = document.getElementById('helper-text');
 const slotsRemaining = document.getElementById('slots-remaining');
 const groupsContainer = document.getElementById('groups-container');
 const template = document.getElementById('group-template');
+const resetButton = document.getElementById('reset-draw');
 
 let totalParticipants = 0;
 
@@ -111,12 +112,28 @@ function addParticipant() {
     nameInput.focus();
 }
 
+function resetDraw() {
+    GROUPS.forEach((group) => {
+        for (let i = 0; i < group.slots.length; i += 1) {
+            group.slots[i] = null;
+        }
+    });
+
+    totalParticipants = 0;
+    addButton.disabled = false;
+    nameInput.disabled = false;
+    nameInput.value = '';
+    nameInput.focus();
+    updateSlotsUI();
+}
+
 addButton.addEventListener('click', addParticipant);
 nameInput.addEventListener('keyup', (event) => {
     if (event.key === 'Enter') {
         addParticipant();
     }
 });
+resetButton.addEventListener('click', resetDraw);
 
 initGroups();
 updateSlotsUI();
