@@ -28,11 +28,17 @@ const matchesRemainingLabel = document.getElementById('matches-remaining');
 const standingsContainer = document.getElementById('standings-container');
 const undoButton = document.getElementById('undo-match');
 const undoArrowButton = document.getElementById('undo-arrow');
+const manualToggleButton = document.getElementById('toggle-manual-entry');
+const manualFields = document.getElementById('manual-fields');
+const manualGroupSelect = document.getElementById('manual-group-select');
+const manualPositionSelect = document.getElementById('manual-position-select');
+const manualHelperText = document.getElementById('manual-helper-text');
 
 let totalParticipants = 0;
 let matchQueue = [];
 let currentMatchIndex = 0;
 let matchHistory = [];
+let manualMode = false;
 
 function createPlayer(name) {
     return { name, points: 0, diff: 0 };
@@ -54,6 +60,8 @@ function renderGroups() {
         const clone = template.content.cloneNode(true);
         const card = clone.querySelector('.group-card');
         card.dataset.groupIndex = index;
+        const groupSuffix = String.fromCharCode(97 + index);
+        card.classList.add(`group-card--${groupSuffix}`);
 
         card.querySelector('h2').textContent = group.name;
         card.querySelector('.badge').textContent = String.fromCharCode(65 + index);
@@ -95,10 +103,108 @@ function updateCapacityUI() {
     nameInput.disabled = shouldDisableInputs;
 }
 
+function refreshManualControls() {
+    if (!manualToggleButton || !manualFields) return;
+
+    manualToggleButton.classList.toggle('is-active', manualMode);
+    manualToggleButton.setAttribute('aria-pressed', manualMode ? 'true' : 'false');
+    manualToggleButton.textContent = manualMode
+        ? 'Asignación manual activada'
+        : 'Asignación manual desactivada';
+    manualFields.hidden = !manualMode;
+
+    if (manualGroupSelect) {
+        manualGroupSelect.disabled = !manualMode;
+    }
+    if (manualPositionSelect) {
+        manualPositionSelect.disabled = !manualMode;
+    }
+
+    if (manualMode) {
+        populateManualGroupOptions();
+    }
+}
+
+function populateManualGroupOptions() {
+    if (!manualMode || !manualGroupSelect || !manualPositionSelect) return;
+
+    const availableGroups = GROUPS.map((group, groupIndex) => {
+        const freePositions = [];
+        group.slots.forEach((slot, positionIndex) => {
+            if (!slot) {
+                freePositions.push(positionIndex);
+            }
+        });
+        return { groupIndex, name: group.name, freePositions };
+    }).filter((group) => group.freePositions.length);
+
+    if (!availableGroups.length) {
+        manualGroupSelect.innerHTML = '';
+        manualPositionSelect.innerHTML = '';
+        manualGroupSelect.disabled = true;
+        manualPositionSelect.disabled = true;
+        if (manualHelperText) {
+            manualHelperText.textContent = 'No quedan posiciones vacías para asignar manualmente.';
+        }
+        return;
+    }
+
+    const previousValue = manualGroupSelect.value;
+    manualGroupSelect.innerHTML = availableGroups
+        .map((group) => `<option value="${group.groupIndex}">${group.name}</option>`)
+        .join('');
+
+    const existingSelection = availableGroups.find((group) => String(group.groupIndex) === previousValue);
+    manualGroupSelect.value = existingSelection
+        ? String(existingSelection.groupIndex)
+        : String(availableGroups[0].groupIndex);
+
+    populateManualPositionOptions();
+}
+
+function populateManualPositionOptions() {
+    if (!manualMode || !manualGroupSelect || !manualPositionSelect) return;
+
+    const groupIndex = Number(manualGroupSelect.value);
+    const group = GROUPS[groupIndex];
+    if (!group) {
+        manualPositionSelect.innerHTML = '';
+        manualPositionSelect.disabled = true;
+        return;
+    }
+
+    const options = group.slots
+        .map((slot, positionIndex) => (!slot
+            ? `<option value="${positionIndex}">Posición ${positionIndex + 1}</option>`
+            : null))
+        .filter(Boolean)
+        .join('');
+
+    manualPositionSelect.innerHTML = options;
+    const hasOptions = Boolean(options);
+    manualPositionSelect.disabled = !hasOptions;
+    if (!hasOptions && manualHelperText) {
+        manualHelperText.textContent = 'Ese grupo está completo, elegí otro.';
+    }
+}
+
+function toggleManualMode() {
+    manualMode = !manualMode;
+    if (manualMode) {
+        if (manualHelperText) {
+            manualHelperText.textContent = 'Elegí el grupo y la posición antes de anotar.';
+        }
+    } else if (manualHelperText) {
+        manualHelperText.textContent = 'Elegí el grupo y la posición para ubicar manualmente a la persona.';
+    }
+    refreshManualControls();
+}
+
 function refreshUI() {
     renderGroups();
     updateCapacityUI();
     updateStandings();
+    refreshManualControls();
 }
 
 function addParticipant() {
@@ -113,30 +219,12 @@ function addParticipant() {
         return;
     }
 
-    const isFirstParticipant = totalParticipants === 0;
+    const wasAssigned = manualMode
+        ? assignParticipantManually(name)
+        : assignParticipantAutomatically(name);
 
-    if (isFirstParticipant) {
-        GROUPS[0].slots[0] = createPlayer(name);
-    } else {
-        const availableSlots = [];
-
-        GROUPS.forEach((group, groupIndex) => {
-            group.slots.forEach((slot, slotIndex) => {
-                const isFirstPosition = groupIndex === 0 && slotIndex === 0;
-                if (!slot && !isFirstPosition) {
-                    availableSlots.push({ groupIndex, slotIndex });
-                }
-            });
-        });
-
-        if (!availableSlots.length) {
-            helperText.textContent = 'Ya no quedan espacios disponibles.';
-            refreshUI();
-            return;
-        }
-
-        const randomSlot = availableSlots[Math.floor(Math.random() * availableSlots.length)];
-        GROUPS[randomSlot.groupIndex].slots[randomSlot.slotIndex] = createPlayer(name);
+    if (!wasAssigned) {
+        return;
     }
 
     totalParticipants += 1;
@@ -144,6 +232,72 @@ function addParticipant() {
     rebuildMatchQueue();
     nameInput.value = '';
     nameInput.focus();
+}
+
+function assignParticipantAutomatically(name) {
+    const isFirstParticipant = totalParticipants === 0;
+
+    if (isFirstParticipant) {
+        GROUPS[0].slots[0] = createPlayer(name);
+        return true;
+    }
+
+    const availableSlots = [];
+
+    GROUPS.forEach((group, groupIndex) => {
+        group.slots.forEach((slot, slotIndex) => {
+            const isFirstPosition = groupIndex === 0 && slotIndex === 0;
+            if (!slot && !isFirstPosition) {
+                availableSlots.push({ groupIndex, slotIndex });
+            }
+        });
+    });
+
+    if (!availableSlots.length) {
+        helperText.textContent = 'Ya no quedan espacios disponibles.';
+        refreshUI();
+        return false;
+    }
+
+    const randomSlot = availableSlots[Math.floor(Math.random() * availableSlots.length)];
+    GROUPS[randomSlot.groupIndex].slots[randomSlot.slotIndex] = createPlayer(name);
+    return true;
+}
+
+function assignParticipantManually(name) {
+    if (!manualGroupSelect || !manualPositionSelect) return false;
+
+    if (!manualGroupSelect.options.length || !manualPositionSelect.options.length) {
+        if (manualHelperText) {
+            manualHelperText.textContent = 'No quedan posiciones vacías para asignar manualmente.';
+        }
+        return false;
+    }
+
+    const groupIndex = Number(manualGroupSelect.value);
+    const positionIndex = Number(manualPositionSelect.value);
+    const group = GROUPS[groupIndex];
+
+    if (!group || Number.isNaN(positionIndex)) {
+        if (manualHelperText) {
+            manualHelperText.textContent = 'Elegí un grupo y una posición disponible.';
+        }
+        return false;
+    }
+
+    if (group.slots[positionIndex]) {
+        if (manualHelperText) {
+            manualHelperText.textContent = 'Esa posición ya está ocupada. Probá con otra disponible.';
+        }
+        populateManualGroupOptions();
+        return false;
+    }
+
+    group.slots[positionIndex] = createPlayer(name);
+    if (manualHelperText) {
+        manualHelperText.textContent = `${name} fue asignado al ${group.name} - Posición ${positionIndex + 1}.`;
+    }
+    return true;
 }
 
 function resetDraw() {
@@ -465,6 +619,12 @@ if (undoButton) {
 }
 if (undoArrowButton) {
     undoArrowButton.addEventListener('click', undoLastMatch);
+}
+if (manualToggleButton) {
+    manualToggleButton.addEventListener('click', toggleManualMode);
+}
+if (manualGroupSelect) {
+    manualGroupSelect.addEventListener('change', populateManualPositionOptions);
 }
 diffInput.addEventListener('input', () => {
     diffValue.textContent = diffInput.value;
