@@ -64,6 +64,11 @@ let matchHistory = [];
 let manualMode = false;
 let knockoutState = resetKnockoutState();
 
+function getMatchKey(match) {
+    if (!match) return '';
+    return `${match.groupIndex}-${match.homeIndex}-${match.awayIndex}`;
+}
+
 function createPlayer(name) {
     return { name, points: 0, diff: 0 };
 }
@@ -76,14 +81,117 @@ function getTotalCapacity() {
     return GROUPS.reduce((sum, group) => sum + group.slots.length, 0);
 }
 
-function getOrderedPlayers(group) {
-    return group.slots
-        .filter(Boolean)
-        .sort((a, b) => {
-            if (b.points !== a.points) return b.points - a.points;
-            if (b.diff !== a.diff) return b.diff - a.diff;
-            return a.name.localeCompare(b.name);
+function getHeadToHeadWinnerSlot(groupIndex, slotIndexA, slotIndexB) {
+    for (let historyIndex = matchHistory.length - 1; historyIndex >= 0; historyIndex -= 1) {
+        const entry = matchHistory[historyIndex];
+        const match = entry?.match;
+        if (!match || match.groupIndex !== groupIndex) continue;
+
+        const samePair = (
+            (match.homeIndex === slotIndexA && match.awayIndex === slotIndexB)
+            || (match.homeIndex === slotIndexB && match.awayIndex === slotIndexA)
+        );
+        if (!samePair) continue;
+
+        return entry.winnerKey === 'home' ? match.homeIndex : match.awayIndex;
+    }
+
+    return null;
+}
+
+function getMiniTableStats(groupIndex, tiedEntries) {
+    const tiedSlots = new Set(tiedEntries.map((entry) => entry.slotIndex));
+    const stats = new Map();
+
+    tiedEntries.forEach((entry) => {
+        stats.set(entry.slotIndex, {
+            points: 0,
+            diff: 0,
+            wins: 0,
+            played: 0,
         });
+    });
+
+    matchHistory.forEach((entry) => {
+        const match = entry?.match;
+        if (!match || match.groupIndex !== groupIndex) return;
+        if (!tiedSlots.has(match.homeIndex) || !tiedSlots.has(match.awayIndex)) return;
+
+        const homeStats = stats.get(match.homeIndex);
+        const awayStats = stats.get(match.awayIndex);
+        if (!homeStats || !awayStats) return;
+
+        const winnerSlot = entry.winnerKey === 'home' ? match.homeIndex : match.awayIndex;
+        const loserSlot = winnerSlot === match.homeIndex ? match.awayIndex : match.homeIndex;
+        const winnerStats = stats.get(winnerSlot);
+        const loserStats = stats.get(loserSlot);
+        if (!winnerStats || !loserStats) return;
+
+        winnerStats.points += 1;
+        winnerStats.wins += 1;
+        winnerStats.played += 1;
+        loserStats.played += 1;
+
+        const margin = Number(entry.diff) || 0;
+        if (margin > 0) {
+            winnerStats.diff += margin;
+            loserStats.diff -= margin;
+        }
+    });
+
+    return stats;
+}
+
+function getOrderedPlayers(group, groupIndex = -1) {
+    const playersWithSlot = group.slots
+        .map((player, slotIndex) => (player ? { player, slotIndex } : null))
+        .filter(Boolean);
+
+    playersWithSlot.sort((a, b) => {
+        if (b.player.points !== a.player.points) return b.player.points - a.player.points;
+        if (b.player.diff !== a.player.diff) return b.player.diff - a.player.diff;
+        return a.player.name.localeCompare(b.player.name);
+    });
+
+    if (groupIndex >= 0) {
+        let start = 0;
+        while (start < playersWithSlot.length) {
+            let end = start + 1;
+            while (
+                end < playersWithSlot.length
+                && playersWithSlot[end].player.points === playersWithSlot[start].player.points
+                && playersWithSlot[end].player.diff === playersWithSlot[start].player.diff
+            ) {
+                end += 1;
+            }
+
+            if (end - start > 1) {
+                const tiedEntries = playersWithSlot.slice(start, end);
+                const miniStats = getMiniTableStats(groupIndex, tiedEntries);
+
+                tiedEntries.sort((a, b) => {
+                    const statsA = miniStats.get(a.slotIndex) || { points: 0, diff: 0, wins: 0, played: 0 };
+                    const statsB = miniStats.get(b.slotIndex) || { points: 0, diff: 0, wins: 0, played: 0 };
+
+                    if (statsB.points !== statsA.points) return statsB.points - statsA.points;
+                    if (statsB.diff !== statsA.diff) return statsB.diff - statsA.diff;
+                    if (statsB.wins !== statsA.wins) return statsB.wins - statsA.wins;
+
+                    const winnerSlot = getHeadToHeadWinnerSlot(groupIndex, a.slotIndex, b.slotIndex);
+                    if (winnerSlot === a.slotIndex) return -1;
+                    if (winnerSlot === b.slotIndex) return 1;
+
+                    return a.player.name.localeCompare(b.player.name);
+                });
+
+                playersWithSlot.splice(start, end - start, ...tiedEntries);
+            }
+
+            start = end;
+        }
+    }
+
+    return playersWithSlot.map((entry) => entry.player);
 }
 
 function getAllPlayers() {
@@ -309,6 +417,8 @@ function addParticipant() {
     }
 
     totalParticipants += 1;
+    knockoutState = resetKnockoutState();
+    hideKnockoutStage();
     refreshUI();
     rebuildMatchQueue();
     nameInput.value = '';
@@ -323,25 +433,22 @@ function assignParticipantAutomatically(name) {
         return true;
     }
 
-    const availableSlots = [];
-
-    GROUPS.forEach((group, groupIndex) => {
-        group.slots.forEach((slot, slotIndex) => {
-            const isFirstPosition = groupIndex === 0 && slotIndex === 0;
-            if (!slot && !isFirstPosition) {
-                availableSlots.push({ groupIndex, slotIndex });
-            }
+    const availableGroups = GROUPS.map((group, groupIndex) => {
+        const firstEmptySlotIndex = group.slots.findIndex((slot, slotIndex) => {
+            const isReservedFirstPosition = groupIndex === 0 && slotIndex === 0;
+            return !slot && !isReservedFirstPosition;
         });
-    });
+        return { groupIndex, firstEmptySlotIndex };
+    }).filter((group) => group.firstEmptySlotIndex >= 0);
 
-    if (!availableSlots.length) {
+    if (!availableGroups.length) {
         helperText.textContent = 'Ya no quedan espacios disponibles.';
         refreshUI();
         return false;
     }
 
-    const randomSlot = availableSlots[Math.floor(Math.random() * availableSlots.length)];
-    GROUPS[randomSlot.groupIndex].slots[randomSlot.slotIndex] = createPlayer(name);
+    const randomGroup = availableGroups[Math.floor(Math.random() * availableGroups.length)];
+    GROUPS[randomGroup.groupIndex].slots[randomGroup.firstEmptySlotIndex] = createPlayer(name);
     return true;
 }
 
@@ -420,7 +527,7 @@ function removeParticipantFromSlot(groupIndex, slotIndex) {
     hideKnockoutStage();
 
     refreshUI();
-    rebuildMatchQueue();
+    rebuildMatchQueue(false);
     resetMatchControls();
     updateUndoState();
 }
@@ -502,7 +609,7 @@ function updateStandings() {
         header.appendChild(badge);
         card.appendChild(header);
 
-        const players = getOrderedPlayers(group);
+        const players = getOrderedPlayers(group, groupIndex);
 
         if (!players.length) {
             const empty = document.createElement('p');
@@ -520,8 +627,8 @@ function updateStandings() {
                 if (index < 2) {
                     row.classList.add('rank-top');
                 }
-                if (index === players.length - 1 && players.length > 0) {
-                    row.classList.add('rank-last');
+                if (index >= 2) {
+                    row.classList.add('rank-eliminated');
                 }
 
                 const nameSpan = document.createElement('span');
@@ -545,7 +652,7 @@ function updateStandings() {
 function canStartKnockoutStage() {
     const hasMatches = matchQueue.length > 0;
     const allMatchesRecorded = hasMatches && currentMatchIndex >= matchQueue.length;
-    const enoughPlayersPerGroup = GROUPS.every((group) => getOrderedPlayers(group).length >= 2);
+    const enoughPlayersPerGroup = GROUPS.every((group, groupIndex) => getOrderedPlayers(group, groupIndex).length >= 2);
     return hasMatches && allMatchesRecorded && enoughPlayersPerGroup;
 }
 
@@ -566,7 +673,7 @@ function updateKnockoutButtonState() {
 }
 
 function buildInitialKnockoutState() {
-    const rankings = GROUPS.map((group) => getOrderedPlayers(group));
+    const rankings = GROUPS.map((group, groupIndex) => getOrderedPlayers(group, groupIndex));
     return {
         started: true,
         quarters: [
@@ -905,6 +1012,16 @@ function renderPerformanceTable() {
         }
 
         const positionCell = document.createElement('td');
+        positionCell.classList.add('performance-rank');
+        if (index === 0) {
+            positionCell.classList.add('performance-rank--top-1');
+        } else if (index <= 3) {
+            positionCell.classList.add('performance-rank--top-4');
+        } else if (index <= 7) {
+            positionCell.classList.add('performance-rank--top-8');
+        } else {
+            positionCell.classList.add('performance-rank--rest');
+        }
         positionCell.textContent = index + 1;
         const nameCell = document.createElement('td');
         nameCell.textContent = player.name;
@@ -992,7 +1109,7 @@ function registerKnockoutWinner(stageKey, matchId, playerIndex) {
     renderKnockoutStage();
 }
 
-function rebuildMatchQueue() {
+function rebuildMatchQueue(preserveProgress = true) {
     const maxSlots = Math.max(...GROUPS.map((group) => group.slots.length));
     if (!Number.isFinite(maxSlots)) {
         matchQueue = [];
@@ -1003,27 +1120,63 @@ function rebuildMatchQueue() {
         return;
     }
 
+    const groupActiveSlots = GROUPS.map((group) => group.slots
+        .map((slot, slotIndex) => (slot ? slotIndex : -1))
+        .filter((slotIndex) => slotIndex >= 0));
+    const maxPlayersInGroup = Math.max(...groupActiveSlots.map((slots) => slots.length), 0);
+
     const newQueue = [];
-    for (let homeIndex = 0; homeIndex < maxSlots - 1; homeIndex += 1) {
-        for (let awayIndex = homeIndex + 1; awayIndex < maxSlots; awayIndex += 1) {
-            GROUPS.forEach((group, groupIndex) => {
-                if (homeIndex >= group.slots.length || awayIndex >= group.slots.length) return;
-                const playerOne = group.slots[homeIndex];
-                const opponent = group.slots[awayIndex];
-                if (playerOne && opponent) {
-                    newQueue.push({
-                        groupIndex,
-                        homeIndex,
-                        awayIndex,
-                    });
-                }
+    for (let rankGap = 1; rankGap < maxPlayersInGroup; rankGap += 1) {
+        for (let homeRankIndex = 0; homeRankIndex + rankGap < maxPlayersInGroup; homeRankIndex += 1) {
+            GROUPS.forEach((_, groupIndex) => {
+                const activeSlots = groupActiveSlots[groupIndex];
+                if (!activeSlots || homeRankIndex + rankGap >= activeSlots.length) return;
+
+                const homeIndex = activeSlots[homeRankIndex];
+                const awayIndex = activeSlots[homeRankIndex + rankGap];
+
+                newQueue.push({
+                    groupIndex,
+                    homeIndex,
+                    awayIndex,
+                    homeRank: homeRankIndex + 1,
+                    awayRank: homeRankIndex + rankGap + 1,
+                });
             });
         }
     }
 
-    matchQueue = newQueue;
-    currentMatchIndex = 0;
-    matchHistory = [];
+    const availableMatchKeys = new Set(newQueue.map((match) => getMatchKey(match)));
+
+    if (!preserveProgress) {
+        matchQueue = newQueue;
+        currentMatchIndex = 0;
+        matchHistory = [];
+        updateMatchUI();
+        updateUndoState();
+        return;
+    }
+
+    const currentMatch = matchQueue[currentMatchIndex] || null;
+    const currentMatchKey = getMatchKey(currentMatch);
+    const filteredHistory = matchHistory.filter((entry) => availableMatchKeys.has(getMatchKey(entry.match)));
+    const completedKeys = new Set(filteredHistory.map((entry) => getMatchKey(entry.match)));
+
+    const completedMatches = newQueue.filter((match) => completedKeys.has(getMatchKey(match)));
+    const pendingMatches = newQueue.filter((match) => !completedKeys.has(getMatchKey(match)));
+
+    // Keep the currently displayed match as the next one after rebuilding (if it still exists).
+    if (currentMatchKey && pendingMatches.length) {
+        const currentPendingIndex = pendingMatches.findIndex((match) => getMatchKey(match) === currentMatchKey);
+        if (currentPendingIndex > 0) {
+            const [anchoredMatch] = pendingMatches.splice(currentPendingIndex, 1);
+            pendingMatches.unshift(anchoredMatch);
+        }
+    }
+
+    matchQueue = [...completedMatches, ...pendingMatches];
+    currentMatchIndex = completedMatches.length;
+    matchHistory = filteredHistory;
     updateMatchUI();
     updateUndoState();
 }
@@ -1074,7 +1227,9 @@ function updateMatchUI() {
     const playerA = group.slots[match.homeIndex];
     const playerB = group.slots[match.awayIndex];
 
-    currentMatchLabel.textContent = `${group.name}: Posición ${match.homeIndex + 1} vs Posición ${match.awayIndex + 1}`;
+    const homeRankLabel = Number.isFinite(match.homeRank) ? match.homeRank : match.homeIndex + 1;
+    const awayRankLabel = Number.isFinite(match.awayRank) ? match.awayRank : match.awayIndex + 1;
+    currentMatchLabel.textContent = `${group.name}: Posición ${homeRankLabel} vs Posición ${awayRankLabel}`;
     matchPlayerAButton.textContent = getSlotLabel(playerA);
     matchPlayerBButton.textContent = getSlotLabel(playerB);
     matchPlayerAButton.dataset.player = 'home';
