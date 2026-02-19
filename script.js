@@ -1157,7 +1157,8 @@ function rebuildMatchQueue(preserveProgress = true) {
         return;
     }
 
-    const currentMatch = matchQueue[currentMatchIndex] || null;
+    const hasStartedGroupStage = matchHistory.length > 0;
+    const currentMatch = hasStartedGroupStage ? (matchQueue[currentMatchIndex] || null) : null;
     const currentMatchKey = getMatchKey(currentMatch);
     const filteredHistory = matchHistory.filter((entry) => availableMatchKeys.has(getMatchKey(entry.match)));
     const completedKeys = new Set(filteredHistory.map((entry) => getMatchKey(entry.match)));
@@ -1165,7 +1166,7 @@ function rebuildMatchQueue(preserveProgress = true) {
     const completedMatches = newQueue.filter((match) => completedKeys.has(getMatchKey(match)));
     const pendingMatches = newQueue.filter((match) => !completedKeys.has(getMatchKey(match)));
 
-    // Keep the currently displayed match as the next one after rebuilding (if it still exists).
+    // Keep the currently displayed match as the next one only after the group stage has started.
     if (currentMatchKey && pendingMatches.length) {
         const currentPendingIndex = pendingMatches.findIndex((match) => getMatchKey(match) === currentMatchKey);
         if (currentPendingIndex > 0) {
