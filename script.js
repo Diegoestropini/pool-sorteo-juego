@@ -634,7 +634,22 @@ function updateStandings() {
                 const nameSpan = document.createElement('span');
                 nameSpan.textContent = player.name;
                 const stats = document.createElement('small');
-                stats.textContent = `${player.points} pts · ${player.diff} dif`;
+                const pointsText = document.createElement('span');
+                pointsText.textContent = `${player.points} pts`;
+                const separatorText = document.createTextNode(' · ');
+                const diffText = document.createElement('span');
+                diffText.classList.add('standings-diff');
+                if (player.diff > 0) {
+                    diffText.classList.add('standings-diff--positive');
+                    diffText.textContent = `+${player.diff} dif`;
+                } else if (player.diff < 0) {
+                    diffText.classList.add('standings-diff--negative');
+                    diffText.textContent = `${player.diff} dif`;
+                } else {
+                    diffText.classList.add('standings-diff--neutral');
+                    diffText.textContent = '0 dif';
+                }
+                stats.append(pointsText, separatorText, diffText);
                 row.appendChild(nameSpan);
                 row.appendChild(stats);
                 list.appendChild(row);
@@ -1007,6 +1022,16 @@ function renderPerformanceTable() {
     ranking.forEach((entry, index) => {
         const { player, totalPoints, bonusPoints } = entry;
         const row = document.createElement('tr');
+        if (index === 0) {
+            row.classList.add('performance-row--top-1');
+        } else if (index <= 3) {
+            row.classList.add('performance-row--top-4');
+        } else if (index <= 7) {
+            row.classList.add('performance-row--top-8');
+        } else {
+            row.classList.add('performance-row--rest');
+        }
+
         if (player === champion) {
             row.classList.add('highlight');
         }

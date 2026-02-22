@@ -538,6 +538,22 @@ body {
     color: var(--text-muted);
 }
 
+.standings-diff {
+    font-weight: 700;
+}
+
+.standings-diff--positive {
+    color: var(--success);
+}
+
+.standings-diff--negative {
+    color: var(--danger);
+}
+
+.standings-diff--neutral {
+    color: var(--text-muted);
+}
+
 .standings-row.rank-top {
     border-color: rgba(35, 196, 131, 0.8);
     background: rgba(35, 196, 131, 0.15);
@@ -972,6 +988,23 @@ body {
 .performance-board tbody tr.highlight td {
     color: var(--success);
     font-weight: 700;
+}
+
+.performance-board tbody tr.performance-row--top-1 td {
+    color: var(--success);
+    font-weight: 700;
+}
+
+.performance-board tbody tr.performance-row--top-4 td {
+    color: #4da3ff;
+}
+
+.performance-board tbody tr.performance-row--top-8 td {
+    color: var(--warning);
+}
+
+.performance-board tbody tr.performance-row--rest td {
+    color: var(--danger);
 }
 
 .performance-rank {
