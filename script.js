@@ -773,8 +773,10 @@ function updateStandings() {
             players.forEach((player, index) => {
                 const row = document.createElement('li');
                 row.className = 'standings-row';
-                if (index < 2) {
-                    row.classList.add('rank-top');
+                if (index === 0) {
+                    row.classList.add('rank-top', 'rank-first');
+                } else if (index === 1) {
+                    row.classList.add('rank-top', 'rank-second');
                 }
                 if (index >= 2) {
                     row.classList.add('rank-eliminated');

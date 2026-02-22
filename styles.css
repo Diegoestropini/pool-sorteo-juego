@@ -556,7 +556,17 @@ body {
 
 .standings-row.rank-top {
     border-color: rgba(35, 196, 131, 0.8);
-    background: rgba(35, 196, 131, 0.15);
+    background: linear-gradient(135deg, rgba(35, 196, 131, 0.26), rgba(35, 196, 131, 0.1));
+}
+
+.standings-row.rank-first {
+    border-color: rgba(62, 221, 151, 0.92);
+    background: linear-gradient(135deg, rgba(56, 232, 157, 0.34), rgba(35, 196, 131, 0.14));
+}
+
+.standings-row.rank-second {
+    border-color: rgba(30, 174, 113, 0.86);
+    background: linear-gradient(135deg, rgba(35, 196, 131, 0.24), rgba(22, 150, 97, 0.1));
 }
 
 .standings-row.rank-eliminated {
