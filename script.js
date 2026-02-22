@@ -13,6 +13,8 @@ const PERFORMANCE_BONUS_CONFIG = Object.freeze({
     thirdPlaceWin: 1,
 });
 
+const STORAGE_KEY = 'pool-draw-state-v1';
+
 const nameInput = document.getElementById('participant-name');
 const addButton = document.getElementById('add-participant');
 const helperText = document.getElementById('helper-text');
@@ -63,6 +65,147 @@ let currentMatchIndex = 0;
 let matchHistory = [];
 let manualMode = false;
 let knockoutState = resetKnockoutState();
+
+function createPlayerFromSavedData(slot) {
+    if (!slot || typeof slot.name !== 'string') return null;
+    return {
+        name: slot.name,
+        points: Number(slot.points) || 0,
+        diff: Number(slot.diff) || 0,
+    };
+}
+
+function getPlayerReference(player) {
+    if (!player) return null;
+    for (let groupIndex = 0; groupIndex < GROUPS.length; groupIndex += 1) {
+        const group = GROUPS[groupIndex];
+        for (let slotIndex = 0; slotIndex < group.slots.length; slotIndex += 1) {
+            if (group.slots[slotIndex] === player) {
+                return { groupIndex, slotIndex };
+            }
+        }
+    }
+    return null;
+}
+
+function serializeKnockoutMatch(match) {
+    if (!match) return null;
+    return {
+        id: match.id,
+        label: match.label,
+        winnerIndex: typeof match.winnerIndex === 'number' ? match.winnerIndex : null,
+        players: Array.isArray(match.players)
+            ? match.players.map((player) => getPlayerReference(player))
+            : [],
+    };
+}
+
+function getPersistedState() {
+    return {
+        groups: GROUPS.map((group) => ({
+            name: group.name,
+            slots: group.slots.map((slot) => (slot ? { ...slot } : null)),
+        })),
+        matchQueue,
+        currentMatchIndex,
+        matchHistory,
+        manualMode,
+        knockoutState: {
+            started: Boolean(knockoutState.started),
+            quarters: (knockoutState.quarters || []).map((match) => serializeKnockoutMatch(match)),
+            semis: (knockoutState.semis || []).map((match) => serializeKnockoutMatch(match)),
+            thirdPlace: serializeKnockoutMatch(knockoutState.thirdPlace),
+            final: serializeKnockoutMatch(knockoutState.final),
+            podium: knockoutState.podium || null,
+        },
+    };
+}
+
+function saveState() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(getPersistedState()));
+    } catch (error) {
+        console.warn('No se pudo guardar el estado local.', error);
+    }
+}
+
+function clearSavedState() {
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+        console.warn('No se pudo borrar el estado local.', error);
+    }
+}
+
+function getPlayerFromReference(reference) {
+    if (!reference || !Number.isInteger(reference.groupIndex) || !Number.isInteger(reference.slotIndex)) {
+        return null;
+    }
+    const group = GROUPS[reference.groupIndex];
+    if (!group) return null;
+    return group.slots[reference.slotIndex] || null;
+}
+
+function hydrateKnockoutMatch(savedMatch) {
+    if (!savedMatch || typeof savedMatch.id !== 'string') return null;
+    const rawPlayers = Array.isArray(savedMatch.players) ? savedMatch.players : [];
+    return {
+        id: savedMatch.id,
+        label: savedMatch.label || '',
+        players: rawPlayers.map((playerRef) => getPlayerFromReference(playerRef)),
+        winnerIndex: Number.isInteger(savedMatch.winnerIndex) ? savedMatch.winnerIndex : null,
+    };
+}
+
+function loadSavedState() {
+    try {
+        const rawState = localStorage.getItem(STORAGE_KEY);
+        if (!rawState) return false;
+
+        const parsedState = JSON.parse(rawState);
+        if (!parsedState || !Array.isArray(parsedState.groups)) return false;
+
+        GROUPS.forEach((group, groupIndex) => {
+            const savedGroup = parsedState.groups[groupIndex];
+            if (!savedGroup || !Array.isArray(savedGroup.slots)) return;
+
+            if (typeof savedGroup.name === 'string' && savedGroup.name.trim()) {
+                group.name = savedGroup.name;
+            }
+            group.slots = savedGroup.slots.map((slot) => createPlayerFromSavedData(slot));
+        });
+
+        totalParticipants = GROUPS.reduce((count, group) => count + group.slots.filter(Boolean).length, 0);
+        matchQueue = Array.isArray(parsedState.matchQueue) ? parsedState.matchQueue : [];
+        matchHistory = Array.isArray(parsedState.matchHistory) ? parsedState.matchHistory : [];
+        currentMatchIndex = Number(parsedState.currentMatchIndex);
+        if (!Number.isFinite(currentMatchIndex)) {
+            currentMatchIndex = 0;
+        }
+        currentMatchIndex = Math.max(0, Math.min(currentMatchIndex, matchQueue.length));
+        manualMode = Boolean(parsedState.manualMode);
+
+        const savedKnockout = parsedState.knockoutState;
+        if (savedKnockout && savedKnockout.started) {
+            knockoutState = {
+                started: true,
+                quarters: (savedKnockout.quarters || []).map((match) => hydrateKnockoutMatch(match)).filter(Boolean),
+                semis: (savedKnockout.semis || []).map((match) => hydrateKnockoutMatch(match)).filter(Boolean),
+                thirdPlace: hydrateKnockoutMatch(savedKnockout.thirdPlace),
+                final: hydrateKnockoutMatch(savedKnockout.final),
+                podium: savedKnockout.podium || null,
+            };
+        } else {
+            knockoutState = resetKnockoutState();
+        }
+
+        return true;
+    } catch (error) {
+        console.warn('No se pudo cargar el estado local.', error);
+        clearSavedState();
+        return false;
+    }
+}
 
 function getMatchKey(match) {
     if (!match) return '';
@@ -387,6 +530,7 @@ function toggleManualMode() {
         manualHelperText.textContent = 'Elegí el grupo y la posición para ubicar manualmente a la persona.';
     }
     refreshManualControls();
+    saveState();
 }
 
 function refreshUI() {
@@ -423,6 +567,7 @@ function addParticipant() {
     rebuildMatchQueue();
     nameInput.value = '';
     nameInput.focus();
+    saveState();
 }
 
 function assignParticipantAutomatically(name) {
@@ -507,6 +652,7 @@ function resetDraw() {
     updateUndoState();
     hideKnockoutStage();
     updateKnockoutButtonState();
+    clearSavedState();
 }
 
 function removeParticipantFromSlot(groupIndex, slotIndex) {
@@ -530,6 +676,7 @@ function removeParticipantFromSlot(groupIndex, slotIndex) {
     rebuildMatchQueue(false);
     resetMatchControls();
     updateUndoState();
+    saveState();
 }
 
 function populateGroupOptions() {
@@ -566,6 +713,7 @@ function addSlotToGroup() {
     group.slots.push(null);
     refreshUI();
     setEditFeedback(`Se agregó una posición al ${group.name}.`);
+    saveState();
 }
 
 function removeSlotFromGroup() {
@@ -586,6 +734,7 @@ function removeSlotFromGroup() {
     group.slots.pop();
     refreshUI();
     setEditFeedback(`Se quitó una posición al ${group.name}.`);
+    saveState();
 }
 
 function updateStandings() {
@@ -715,6 +864,7 @@ function startKnockoutStage() {
     updateFinalsFromSemis();
     renderKnockoutStage();
     updateKnockoutButtonState();
+    saveState();
 }
 
 function hideKnockoutStage() {
@@ -1132,6 +1282,7 @@ function registerKnockoutWinner(stageKey, matchId, playerIndex) {
     }
 
     renderKnockoutStage();
+    saveState();
 }
 
 function rebuildMatchQueue(preserveProgress = true) {
@@ -1301,6 +1452,7 @@ function registerMatchResult(winnerKey) {
     updateStandings();
     updateMatchUI();
     updateUndoState();
+    saveState();
 }
 
 function postponeCurrentMatch() {
@@ -1312,6 +1464,7 @@ function postponeCurrentMatch() {
 
     matchQueue.push(postponedMatch);
     updateMatchUI();
+    saveState();
 }
 
 function undoLastMatch() {
@@ -1349,6 +1502,7 @@ function undoLastMatch() {
     updateStandings();
     updateMatchUI();
     updateUndoState();
+    saveState();
 }
 
 addButton.addEventListener('click', addParticipant);
@@ -1422,7 +1576,11 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
+loadSavedState();
 populateGroupOptions();
 refreshUI();
 resetMatchControls();
 updateUndoState();
+if (knockoutState.started) {
+    renderKnockoutStage();
+}
