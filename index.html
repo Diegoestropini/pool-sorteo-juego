@@ -94,8 +94,13 @@
                 </div>
                 <div class="match-actions">
                     <button id="postpone-match" type="button" class="match-postpone" disabled>Posponer</button>
+                    <button id="toggle-match-history" type="button" class="match-history-toggle" disabled aria-controls="match-history-panel" aria-expanded="false">Ver enfrentamientos</button>
                 </div>
                 <p id="matches-remaining">No hay partidos generados.</p>
+                <section id="match-history-panel" class="match-history-panel" hidden>
+                    <h3>Enfrentamientos jugados</h3>
+                    <div id="match-history-list" class="match-history-list"></div>
+                </section>
             </div>
         </section>
 

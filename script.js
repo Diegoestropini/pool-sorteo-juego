@@ -36,6 +36,9 @@ const diffInput = document.getElementById('diff-input');
 const diffValue = document.getElementById('diff-value');
 const matchesRemainingLabel = document.getElementById('matches-remaining');
 const postponeMatchButton = document.getElementById('postpone-match');
+const toggleMatchHistoryButton = document.getElementById('toggle-match-history');
+const matchHistoryPanel = document.getElementById('match-history-panel');
+const matchHistoryList = document.getElementById('match-history-list');
 const standingsContainer = document.getElementById('standings-container');
 const undoButton = document.getElementById('undo-match');
 const undoArrowButton = document.getElementById('undo-arrow');
@@ -212,6 +215,11 @@ function getMatchKey(match) {
     return `${match.groupIndex}-${match.homeIndex}-${match.awayIndex}`;
 }
 
+function getGroupBadge(groupIndex) {
+    if (!Number.isInteger(groupIndex) || groupIndex < 0) return '?';
+    return String.fromCharCode(65 + groupIndex);
+}
+
 function createPlayer(name) {
     return { name, points: 0, diff: 0 };
 }
@@ -222,6 +230,106 @@ function getSlotLabel(slot) {
 
 function getTotalCapacity() {
     return GROUPS.reduce((sum, group) => sum + group.slots.length, 0);
+}
+
+function renderMatchHistorySnapshot() {
+    if (!matchHistoryList) return;
+
+    matchHistoryList.innerHTML = '';
+    if (!matchHistory.length) {
+        const empty = document.createElement('p');
+        empty.className = 'match-history-empty';
+        empty.textContent = 'Todavía no hay enfrentamientos registrados.';
+        matchHistoryList.appendChild(empty);
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+
+    matchHistory.forEach((entry, index) => {
+        const match = entry?.match;
+        if (!match) return;
+
+        const group = GROUPS[match.groupIndex];
+        const playerA = group?.slots?.[match.homeIndex];
+        const playerB = group?.slots?.[match.awayIndex];
+        const playerAName = playerA?.name || 'Jugador A';
+        const playerBName = playerB?.name || 'Jugador B';
+        const winnerIsHome = entry.winnerKey === 'home';
+        const diff = Number(entry.diff) || 0;
+
+        const card = document.createElement('article');
+        card.className = 'match-history-item';
+
+        const title = document.createElement('p');
+        title.className = 'match-history-item__title';
+        title.textContent = `Partido ${index + 1} · Grupo ${getGroupBadge(match.groupIndex)}`;
+
+        const playersRow = document.createElement('div');
+        playersRow.className = 'match-history-players';
+
+        const homePlayer = document.createElement('span');
+        homePlayer.className = `match-history-player ${winnerIsHome ? 'is-winner' : 'is-loser'}`;
+        homePlayer.textContent = playerAName;
+
+        const versus = document.createElement('span');
+        versus.className = 'match-history-vs';
+        versus.textContent = 'vs';
+
+        const awayPlayer = document.createElement('span');
+        awayPlayer.className = `match-history-player ${winnerIsHome ? 'is-loser' : 'is-winner'}`;
+        awayPlayer.textContent = playerBName;
+
+        const diffTag = document.createElement('span');
+        diffTag.className = 'match-history-diff';
+        diffTag.textContent = `Dif. ${diff}`;
+
+        if (winnerIsHome) {
+            homePlayer.appendChild(diffTag);
+        } else {
+            awayPlayer.appendChild(diffTag);
+        }
+
+        playersRow.append(homePlayer, versus, awayPlayer);
+        card.append(title, playersRow);
+        fragment.appendChild(card);
+    });
+
+    matchHistoryList.appendChild(fragment);
+}
+
+function updateMatchHistoryAvailability() {
+    if (!toggleMatchHistoryButton || !matchHistoryPanel) return;
+
+    const hasHistory = matchHistory.length > 0;
+    toggleMatchHistoryButton.disabled = !hasHistory;
+
+    if (!hasHistory) {
+        matchHistoryPanel.hidden = true;
+        toggleMatchHistoryButton.setAttribute('aria-expanded', 'false');
+        toggleMatchHistoryButton.textContent = 'Ver enfrentamientos';
+        return;
+    }
+
+    if (!matchHistoryPanel.hidden) {
+        renderMatchHistorySnapshot();
+    }
+}
+
+function toggleMatchHistoryPanel() {
+    if (!toggleMatchHistoryButton || !matchHistoryPanel) return;
+    if (toggleMatchHistoryButton.disabled) return;
+
+    const willShow = matchHistoryPanel.hidden;
+    if (willShow) {
+        renderMatchHistorySnapshot();
+    }
+
+    matchHistoryPanel.hidden = !willShow;
+    toggleMatchHistoryButton.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+    toggleMatchHistoryButton.textContent = willShow
+        ? 'Ocultar enfrentamientos'
+        : 'Ver enfrentamientos';
 }
 
 function getHeadToHeadWinnerSlot(groupIndex, slotIndexA, slotIndexB) {
@@ -1374,6 +1482,7 @@ function updateUndoState() {
     if (undoArrowButton) {
         undoArrowButton.disabled = isDisabled;
     }
+    updateMatchHistoryAvailability();
 }
 
 function updateMatchUI() {
@@ -1534,6 +1643,9 @@ if (undoArrowButton) {
 }
 if (postponeMatchButton) {
     postponeMatchButton.addEventListener('click', postponeCurrentMatch);
+}
+if (toggleMatchHistoryButton) {
+    toggleMatchHistoryButton.addEventListener('click', toggleMatchHistoryPanel);
 }
 if (manualToggleButton) {
     manualToggleButton.addEventListener('click', toggleManualMode);
