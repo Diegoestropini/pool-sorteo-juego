@@ -763,6 +763,47 @@ function resetDraw() {
     clearSavedState();
 }
 
+function resetGroupStageStats() {
+    GROUPS.forEach((group) => {
+        group.slots.forEach((player) => {
+            if (!player) return;
+            player.points = 0;
+            player.diff = 0;
+        });
+    });
+}
+
+function applyGroupStageResult(entry) {
+    const match = entry?.match;
+    if (!match) return false;
+
+    const group = GROUPS[match.groupIndex];
+    if (!group) return false;
+
+    const playerA = group.slots[match.homeIndex];
+    const playerB = group.slots[match.awayIndex];
+    if (!playerA || !playerB) return false;
+
+    const winner = entry.winnerKey === 'home' ? playerA : playerB;
+    const loser = entry.winnerKey === 'home' ? playerB : playerA;
+    const diff = Number(entry.diff) || 0;
+
+    winner.points += 1;
+    if (diff > 0) {
+        winner.diff += diff;
+        loser.diff -= diff;
+    }
+
+    return true;
+}
+
+function isMatchPlayable(match) {
+    if (!match) return false;
+    const group = GROUPS[match.groupIndex];
+    if (!group) return false;
+    return Boolean(group.slots[match.homeIndex] && group.slots[match.awayIndex]);
+}
+
 function removeParticipantFromSlot(groupIndex, slotIndex) {
     const group = GROUPS[groupIndex];
     if (!group) return;
@@ -772,18 +813,13 @@ function removeParticipantFromSlot(groupIndex, slotIndex) {
 
     group.slots[slotIndex] = null;
     totalParticipants = Math.max(0, totalParticipants - 1);
-    helperText.textContent = `${slot.name} fue eliminado del ${group.name}.`;
+    helperText.textContent = `${slot.name} fue retirado del ${group.name}. El campeonato continÃºa.`;
 
-    matchHistory = [];
-    matchQueue = [];
-    currentMatchIndex = 0;
     knockoutState = resetKnockoutState();
     hideKnockoutStage();
 
     refreshUI();
-    rebuildMatchQueue(false);
-    resetMatchControls();
-    updateUndoState();
+    rebuildMatchQueue(true);
     saveState();
 }
 
@@ -1438,6 +1474,7 @@ function rebuildMatchQueue(preserveProgress = true) {
         matchQueue = newQueue;
         currentMatchIndex = 0;
         matchHistory = [];
+        resetGroupStageStats();
         updateMatchUI();
         updateUndoState();
         return;
@@ -1446,7 +1483,12 @@ function rebuildMatchQueue(preserveProgress = true) {
     const hasStartedGroupStage = matchHistory.length > 0;
     const currentMatch = hasStartedGroupStage ? (matchQueue[currentMatchIndex] || null) : null;
     const currentMatchKey = getMatchKey(currentMatch);
-    const filteredHistory = matchHistory.filter((entry) => availableMatchKeys.has(getMatchKey(entry.match)));
+    const filteredHistory = matchHistory.filter((entry) => {
+        const match = entry?.match;
+        if (!match) return false;
+        if (!availableMatchKeys.has(getMatchKey(match))) return false;
+        return isMatchPlayable(match);
+    });
     const completedKeys = new Set(filteredHistory.map((entry) => getMatchKey(entry.match)));
 
     const completedMatches = newQueue.filter((match) => completedKeys.has(getMatchKey(match)));
@@ -1464,6 +1506,9 @@ function rebuildMatchQueue(preserveProgress = true) {
     matchQueue = [...completedMatches, ...pendingMatches];
     currentMatchIndex = completedMatches.length;
     matchHistory = filteredHistory;
+    resetGroupStageStats();
+    matchHistory = matchHistory.filter((entry) => applyGroupStageResult(entry));
+    currentMatchIndex = Math.min(currentMatchIndex, matchHistory.length);
     updateMatchUI();
     updateUndoState();
 }
