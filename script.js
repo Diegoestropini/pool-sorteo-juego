@@ -32,6 +32,7 @@ const editFeedback = document.getElementById('edit-feedback');
 const currentMatchLabel = document.getElementById('current-match-label');
 const matchPlayerAButton = document.getElementById('match-player-a');
 const matchPlayerBButton = document.getElementById('match-player-b');
+const versusChip = document.querySelector('.vs');
 const diffInput = document.getElementById('diff-input');
 const diffValue = document.getElementById('diff-value');
 const matchesRemainingLabel = document.getElementById('matches-remaining');
@@ -67,6 +68,23 @@ let matchQueue = [];
 let currentMatchIndex = 0;
 let matchHistory = [];
 let manualMode = false;
+
+const MATCH_PALETTES = Object.freeze([
+    { homeBase: 'linear-gradient(135deg, rgba(11, 40, 35, 0.96), rgba(14, 61, 54, 0.9))', homeOverlay: 'linear-gradient(135deg, rgba(45, 212, 191, 0.3), rgba(125, 211, 252, 0.08))', homeBorder: 'rgba(94, 234, 212, 0.28)', homeShadow: '0 14px 32px rgba(8, 30, 28, 0.35)', awayBase: 'linear-gradient(135deg, rgba(18, 27, 63, 0.96), rgba(34, 24, 77, 0.9))', awayOverlay: 'linear-gradient(135deg, rgba(96, 165, 250, 0.28), rgba(167, 139, 250, 0.12))', awayBorder: 'rgba(129, 140, 248, 0.3)', awayShadow: '0 14px 32px rgba(10, 18, 44, 0.35)', vsBase: 'radial-gradient(circle at 30% 30%, rgba(125, 211, 252, 0.95), rgba(129, 140, 248, 0.92))', vsShadow: '0 14px 28px rgba(71, 103, 219, 0.28)' },
+    { homeBase: 'linear-gradient(135deg, rgba(54, 17, 17, 0.96), rgba(93, 31, 31, 0.9))', homeOverlay: 'linear-gradient(135deg, rgba(251, 113, 133, 0.32), rgba(252, 165, 165, 0.1))', homeBorder: 'rgba(251, 113, 133, 0.28)', homeShadow: '0 14px 32px rgba(43, 10, 20, 0.34)', awayBase: 'linear-gradient(135deg, rgba(49, 27, 13, 0.96), rgba(92, 49, 16, 0.9))', awayOverlay: 'linear-gradient(135deg, rgba(251, 191, 36, 0.28), rgba(249, 115, 22, 0.12))', awayBorder: 'rgba(251, 191, 36, 0.28)', awayShadow: '0 14px 32px rgba(52, 25, 7, 0.35)', vsBase: 'radial-gradient(circle at 30% 30%, rgba(253, 186, 116, 0.96), rgba(251, 113, 133, 0.92))', vsShadow: '0 14px 28px rgba(153, 66, 66, 0.28)' },
+    { homeBase: 'linear-gradient(135deg, rgba(18, 33, 61, 0.96), rgba(21, 63, 96, 0.9))', homeOverlay: 'linear-gradient(135deg, rgba(56, 189, 248, 0.28), rgba(45, 212, 191, 0.1))', homeBorder: 'rgba(56, 189, 248, 0.28)', homeShadow: '0 14px 32px rgba(9, 24, 44, 0.35)', awayBase: 'linear-gradient(135deg, rgba(31, 22, 64, 0.96), rgba(68, 31, 108, 0.9))', awayOverlay: 'linear-gradient(135deg, rgba(192, 132, 252, 0.28), rgba(96, 165, 250, 0.12))', awayBorder: 'rgba(192, 132, 252, 0.28)', awayShadow: '0 14px 32px rgba(20, 12, 49, 0.35)', vsBase: 'radial-gradient(circle at 30% 30%, rgba(45, 212, 191, 0.96), rgba(192, 132, 252, 0.92))', vsShadow: '0 14px 28px rgba(76, 71, 183, 0.28)' },
+    { homeBase: 'linear-gradient(135deg, rgba(22, 45, 27, 0.96), rgba(35, 88, 52, 0.9))', homeOverlay: 'linear-gradient(135deg, rgba(74, 222, 128, 0.3), rgba(163, 230, 53, 0.1))', homeBorder: 'rgba(74, 222, 128, 0.28)', homeShadow: '0 14px 32px rgba(13, 39, 20, 0.35)', awayBase: 'linear-gradient(135deg, rgba(27, 36, 12, 0.96), rgba(74, 78, 18, 0.9))', awayOverlay: 'linear-gradient(135deg, rgba(250, 204, 21, 0.28), rgba(163, 230, 53, 0.12))', awayBorder: 'rgba(250, 204, 21, 0.28)', awayShadow: '0 14px 32px rgba(42, 43, 12, 0.35)', vsBase: 'radial-gradient(circle at 30% 30%, rgba(163, 230, 53, 0.96), rgba(74, 222, 128, 0.92))', vsShadow: '0 14px 28px rgba(74, 125, 43, 0.28)' },
+    { homeBase: 'linear-gradient(135deg, rgba(46, 17, 43, 0.96), rgba(82, 27, 71, 0.9))', homeOverlay: 'linear-gradient(135deg, rgba(244, 114, 182, 0.3), rgba(196, 181, 253, 0.1))', homeBorder: 'rgba(244, 114, 182, 0.28)', homeShadow: '0 14px 32px rgba(43, 13, 39, 0.35)', awayBase: 'linear-gradient(135deg, rgba(23, 22, 58, 0.96), rgba(31, 53, 102, 0.9))', awayOverlay: 'linear-gradient(135deg, rgba(129, 140, 248, 0.28), rgba(96, 165, 250, 0.12))', awayBorder: 'rgba(129, 140, 248, 0.28)', awayShadow: '0 14px 32px rgba(14, 18, 52, 0.35)', vsBase: 'radial-gradient(circle at 30% 30%, rgba(244, 114, 182, 0.96), rgba(129, 140, 248, 0.92))', vsShadow: '0 14px 28px rgba(102, 61, 145, 0.28)' },
+    { homeBase: 'linear-gradient(135deg, rgba(17, 41, 48, 0.96), rgba(22, 77, 90, 0.9))', homeOverlay: 'linear-gradient(135deg, rgba(103, 232, 249, 0.3), rgba(45, 212, 191, 0.1))', homeBorder: 'rgba(103, 232, 249, 0.28)', homeShadow: '0 14px 32px rgba(10, 32, 38, 0.35)', awayBase: 'linear-gradient(135deg, rgba(44, 28, 12, 0.96), rgba(97, 63, 18, 0.9))', awayOverlay: 'linear-gradient(135deg, rgba(251, 191, 36, 0.28), rgba(253, 186, 116, 0.12))', awayBorder: 'rgba(251, 191, 36, 0.28)', awayShadow: '0 14px 32px rgba(51, 31, 8, 0.35)', vsBase: 'radial-gradient(circle at 30% 30%, rgba(103, 232, 249, 0.96), rgba(251, 191, 36, 0.92))', vsShadow: '0 14px 28px rgba(93, 110, 58, 0.28)' },
+    { homeBase: 'linear-gradient(135deg, rgba(35, 20, 50, 0.96), rgba(56, 27, 88, 0.9))', homeOverlay: 'linear-gradient(135deg, rgba(167, 139, 250, 0.3), rgba(244, 114, 182, 0.1))', homeBorder: 'rgba(167, 139, 250, 0.28)', homeShadow: '0 14px 32px rgba(24, 12, 45, 0.35)', awayBase: 'linear-gradient(135deg, rgba(18, 42, 31, 0.96), rgba(28, 76, 49, 0.9))', awayOverlay: 'linear-gradient(135deg, rgba(74, 222, 128, 0.28), rgba(45, 212, 191, 0.12))', awayBorder: 'rgba(74, 222, 128, 0.28)', awayShadow: '0 14px 32px rgba(12, 35, 23, 0.35)', vsBase: 'radial-gradient(circle at 30% 30%, rgba(167, 139, 250, 0.96), rgba(74, 222, 128, 0.92))', vsShadow: '0 14px 28px rgba(73, 100, 102, 0.28)' },
+    { homeBase: 'linear-gradient(135deg, rgba(60, 20, 24, 0.96), rgba(103, 33, 44, 0.9))', homeOverlay: 'linear-gradient(135deg, rgba(248, 113, 113, 0.32), rgba(253, 186, 116, 0.1))', homeBorder: 'rgba(248, 113, 113, 0.28)', homeShadow: '0 14px 32px rgba(52, 14, 20, 0.35)', awayBase: 'linear-gradient(135deg, rgba(20, 32, 63, 0.96), rgba(16, 66, 100, 0.9))', awayOverlay: 'linear-gradient(135deg, rgba(56, 189, 248, 0.28), rgba(129, 140, 248, 0.12))', awayBorder: 'rgba(56, 189, 248, 0.28)', awayShadow: '0 14px 32px rgba(10, 24, 49, 0.35)', vsBase: 'radial-gradient(circle at 30% 30%, rgba(248, 113, 113, 0.96), rgba(56, 189, 248, 0.92))', vsShadow: '0 14px 28px rgba(93, 68, 95, 0.28)' },
+    { homeBase: 'linear-gradient(135deg, rgba(28, 46, 18, 0.96), rgba(51, 92, 23, 0.9))', homeOverlay: 'linear-gradient(135deg, rgba(163, 230, 53, 0.3), rgba(34, 197, 94, 0.1))', homeBorder: 'rgba(163, 230, 53, 0.28)', homeShadow: '0 14px 32px rgba(20, 40, 12, 0.35)', awayBase: 'linear-gradient(135deg, rgba(18, 35, 48, 0.96), rgba(21, 63, 88, 0.9))', awayOverlay: 'linear-gradient(135deg, rgba(103, 232, 249, 0.28), rgba(59, 130, 246, 0.12))', awayBorder: 'rgba(103, 232, 249, 0.28)', awayShadow: '0 14px 32px rgba(11, 27, 38, 0.35)', vsBase: 'radial-gradient(circle at 30% 30%, rgba(163, 230, 53, 0.96), rgba(103, 232, 249, 0.92))', vsShadow: '0 14px 28px rgba(74, 117, 74, 0.28)' },
+    { homeBase: 'linear-gradient(135deg, rgba(42, 21, 21, 0.96), rgba(88, 35, 25, 0.9))', homeOverlay: 'linear-gradient(135deg, rgba(251, 146, 60, 0.3), rgba(248, 113, 113, 0.1))', homeBorder: 'rgba(251, 146, 60, 0.28)', homeShadow: '0 14px 32px rgba(45, 18, 14, 0.35)', awayBase: 'linear-gradient(135deg, rgba(19, 26, 67, 0.96), rgba(37, 28, 93, 0.9))', awayOverlay: 'linear-gradient(135deg, rgba(129, 140, 248, 0.28), rgba(192, 132, 252, 0.12))', awayBorder: 'rgba(129, 140, 248, 0.28)', awayShadow: '0 14px 32px rgba(13, 16, 56, 0.35)', vsBase: 'radial-gradient(circle at 30% 30%, rgba(251, 146, 60, 0.96), rgba(129, 140, 248, 0.92))', vsShadow: '0 14px 28px rgba(105, 70, 96, 0.28)' },
+    { homeBase: 'linear-gradient(135deg, rgba(14, 38, 49, 0.96), rgba(20, 78, 78, 0.9))', homeOverlay: 'linear-gradient(135deg, rgba(45, 212, 191, 0.3), rgba(103, 232, 249, 0.1))', homeBorder: 'rgba(45, 212, 191, 0.28)', homeShadow: '0 14px 32px rgba(9, 28, 35, 0.35)', awayBase: 'linear-gradient(135deg, rgba(46, 18, 54, 0.96), rgba(87, 24, 64, 0.9))', awayOverlay: 'linear-gradient(135deg, rgba(244, 114, 182, 0.28), rgba(251, 113, 133, 0.12))', awayBorder: 'rgba(244, 114, 182, 0.28)', awayShadow: '0 14px 32px rgba(37, 12, 38, 0.35)', vsBase: 'radial-gradient(circle at 30% 30%, rgba(45, 212, 191, 0.96), rgba(244, 114, 182, 0.92))', vsShadow: '0 14px 28px rgba(74, 95, 109, 0.28)' },
+    { homeBase: 'linear-gradient(135deg, rgba(23, 31, 67, 0.96), rgba(13, 71, 120, 0.9))', homeOverlay: 'linear-gradient(135deg, rgba(96, 165, 250, 0.3), rgba(34, 211, 238, 0.1))', homeBorder: 'rgba(96, 165, 250, 0.28)', homeShadow: '0 14px 32px rgba(10, 25, 56, 0.35)', awayBase: 'linear-gradient(135deg, rgba(44, 31, 10, 0.96), rgba(98, 74, 16, 0.9))', awayOverlay: 'linear-gradient(135deg, rgba(250, 204, 21, 0.28), rgba(253, 186, 116, 0.12))', awayBorder: 'rgba(250, 204, 21, 0.28)', awayShadow: '0 14px 32px rgba(52, 38, 8, 0.35)', vsBase: 'radial-gradient(circle at 30% 30%, rgba(96, 165, 250, 0.96), rgba(250, 204, 21, 0.92))', vsShadow: '0 14px 28px rgba(88, 92, 86, 0.28)' }
+]);
+
+const matchPaletteAssignments = new Map();
 let knockoutState = resetKnockoutState();
 
 function createPlayerFromSavedData(slot) {
@@ -213,6 +231,59 @@ function loadSavedState() {
 function getMatchKey(match) {
     if (!match) return '';
     return `${match.groupIndex}-${match.homeIndex}-${match.awayIndex}`;
+}
+
+function getVisualMatchKey(match) {
+    if (!match) return '';
+    return 'gr-' + getMatchKey(match);
+}
+
+function getMatchPalette(match) {
+    const matchKey = getVisualMatchKey(match);
+    if (!matchKey) return MATCH_PALETTES[0];
+    if (!matchPaletteAssignments.has(matchKey)) {
+        const usedIndexes = new Set(matchPaletteAssignments.values());
+        let paletteIndex = MATCH_PALETTES.findIndex((_, index) => !usedIndexes.has(index));
+        if (paletteIndex === -1) {
+            paletteIndex = matchPaletteAssignments.size % MATCH_PALETTES.length;
+        }
+        matchPaletteAssignments.set(matchKey, paletteIndex);
+    }
+    return MATCH_PALETTES[matchPaletteAssignments.get(matchKey)] || MATCH_PALETTES[0];
+}
+
+function clearMatchPalette() {
+    [matchPlayerAButton, matchPlayerBButton].forEach((element) => {
+        if (!element) return;
+        element.style.removeProperty('--match-card-base');
+        element.style.removeProperty('--match-card-overlay');
+        element.style.removeProperty('--match-card-border');
+        element.style.removeProperty('--match-card-shadow');
+    });
+    if (versusChip) {
+        versusChip.style.removeProperty('--vs-bg');
+        versusChip.style.removeProperty('--vs-shadow');
+    }
+}
+
+function applyMatchPalette(match) {
+    if (!matchPlayerAButton || !matchPlayerBButton || !versusChip) return;
+    if (!match) {
+        clearMatchPalette();
+        return;
+    }
+
+    const palette = getMatchPalette(match);
+    matchPlayerAButton.style.setProperty('--match-card-base', palette.homeBase);
+    matchPlayerAButton.style.setProperty('--match-card-overlay', palette.homeOverlay);
+    matchPlayerAButton.style.setProperty('--match-card-border', palette.homeBorder);
+    matchPlayerAButton.style.setProperty('--match-card-shadow', palette.homeShadow);
+    matchPlayerBButton.style.setProperty('--match-card-base', palette.awayBase);
+    matchPlayerBButton.style.setProperty('--match-card-overlay', palette.awayOverlay);
+    matchPlayerBButton.style.setProperty('--match-card-border', palette.awayBorder);
+    matchPlayerBButton.style.setProperty('--match-card-shadow', palette.awayShadow);
+    versusChip.style.setProperty('--vs-bg', palette.vsBase);
+    versusChip.style.setProperty('--vs-shadow', palette.vsShadow);
 }
 
 function getGroupBadge(groupIndex) {
@@ -1553,6 +1624,7 @@ function updateMatchUI() {
         }
         matchPlayerAButton.textContent = 'Jugador A';
         matchPlayerBButton.textContent = 'Jugador B';
+        clearMatchPalette();
         return;
     }
 
@@ -1565,6 +1637,7 @@ function updateMatchUI() {
     currentMatchLabel.textContent = `${group.name}: Posición ${homeRankLabel} vs Posición ${awayRankLabel}`;
     matchPlayerAButton.textContent = getSlotLabel(playerA);
     matchPlayerBButton.textContent = getSlotLabel(playerB);
+    applyMatchPalette(match);
     matchPlayerAButton.dataset.player = 'home';
     matchPlayerBButton.dataset.player = 'away';
     diffInput.value = diffInput.disabled ? 0 : diffInput.value;
@@ -1743,3 +1816,4 @@ updateUndoState();
 if (knockoutState.started) {
     renderKnockoutStage();
 }
+
