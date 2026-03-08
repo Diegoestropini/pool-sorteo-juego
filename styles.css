@@ -220,7 +220,7 @@ body {
 .edit-panel__actions button {
     flex: 1;
     min-width: 180px;
-    border-radius: 16px;
+    border-radius: 14px;
     border: none;
     padding: 0.9rem 1.5rem;
     font-weight: 600;
@@ -263,7 +263,7 @@ body {
     flex: 1;
     padding: 0.9rem 1.1rem;
     font-size: 1rem;
-    border-radius: 16px;
+    border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(10, 12, 28, 0.9);
     color: var(--text-strong);
@@ -282,7 +282,7 @@ body {
     color: #0e0820;
     font-weight: 600;
     padding: 0.95rem 1.8rem;
-    border-radius: 16px;
+    border-radius: 14px;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
 }
@@ -445,7 +445,7 @@ body {
     flex-direction: column;
     gap: 1rem;
     padding: 1.2rem;
-    border-radius: 22px;
+    border-radius: 20px;
     background: linear-gradient(180deg, rgba(9, 15, 31, 0.82), rgba(7, 11, 24, 0.94));
     border: 1px solid rgba(126, 211, 255, 0.12);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -567,14 +567,14 @@ body {
 .match-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 0.65rem;
+    gap: 0.55rem;
     flex-wrap: wrap;
 }
 
 #matches-remaining {
     margin: 0;
     color: rgba(183, 196, 223, 0.78);
-    font-size: 0.95rem;
+    font-size: 0.91rem;
 }
 
 .match-postpone {
@@ -649,7 +649,7 @@ body {
 
 .match-history-item__title {
     margin: 0 0 0.45rem;
-    font-size: 0.82rem;
+    font-size: 0.76rem;
     color: var(--text-muted);
 }
 
@@ -704,27 +704,75 @@ body {
 
 .standings-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
     gap: 1rem;
 }
 
 .standings-card {
-    background: rgba(12, 15, 32, 0.9);
-    border-radius: 16px;
-    padding: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at top left, rgba(125, 211, 252, 0.08), transparent 34%),
+        linear-gradient(160deg, rgba(10, 14, 31, 0.96), rgba(7, 10, 22, 0.94));
+    border-radius: 20px;
+    padding: 1.05rem 1rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 18px 36px rgba(4, 8, 20, 0.3);
+}
+
+.standings-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: linear-gradient(180deg, rgba(125, 211, 252, 0.95), rgba(143, 123, 255, 0.55));
 }
 
 .standings-card header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.75rem;
+    gap: 0.9rem;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.58rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.standings-card__heading {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
 }
 
 .standings-card h3 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1.14rem;
+    letter-spacing: 0.01em;
+}
+
+.standings-card__subtitle {
+    margin: 0;
+    color: rgba(198, 210, 236, 0.68);
+    font-size: 0.74rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.badge--standings {
+    min-width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0 0.78rem;
+    font-weight: 800;
+    color: #07111f;
+    background: linear-gradient(135deg, #9be7ff, #a78bfa);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 12px 24px rgba(86, 116, 218, 0.24);
 }
 
 .standings-list {
@@ -733,30 +781,84 @@ body {
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.55rem;
 }
 
 .standings-row {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 30px minmax(0, 2.6fr) auto;
     align-items: center;
-    border-radius: 12px;
-    padding: 0.5rem 0.75rem;
+    gap: 0.55rem;
+    border-radius: 14px;
+    padding: 0.68rem 0.74rem;
     background: rgba(143, 123, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    font-size: 0.95rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 1rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-.standings-row span {
-    font-weight: 600;
+.standings-rank-chip {
+    min-width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 800;
+    color: rgba(240, 247, 255, 0.92);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.09);
 }
 
-.standings-row small {
-    color: var(--text-muted);
+.standings-player {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.standings-player-name {
+    display: block;
+    color: #c8f3ff;
+    font-family: 'Sora', 'Manrope', system-ui, sans-serif;
+    font-size: 0.91rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-shadow: 0 0 16px rgba(79, 195, 247, 0.12);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+    line-height: 1.2;
+}
+
+.standings-stats {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+}
+
+.standings-stat {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    border-radius: 999px;
+    padding: 0.14rem 0.42rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.standings-stat--points {
+    color: #dff7ee;
+    background: rgba(35, 196, 131, 0.14);
+    border-color: rgba(35, 196, 131, 0.22);
 }
 
 .standings-diff {
-    font-weight: 700;
+    font-weight: 800;
 }
 
 .standings-diff--positive {
@@ -772,29 +874,56 @@ body {
 }
 
 .standings-row.rank-top {
-    border-color: rgba(35, 196, 131, 0.8);
-    background: linear-gradient(135deg, rgba(35, 196, 131, 0.26), rgba(35, 196, 131, 0.1));
+    border-color: rgba(35, 196, 131, 0.72);
+    background: linear-gradient(135deg, rgba(35, 196, 131, 0.24), rgba(35, 196, 131, 0.08));
+}
+
+.standings-row.rank-top .standings-rank-chip {
+    background: rgba(35, 196, 131, 0.18);
+    border-color: rgba(35, 196, 131, 0.26);
+}
+
+.standings-row.rank-first .standings-rank-chip {
+    color: #04130d;
+    background: linear-gradient(135deg, #79f2bd, #b6ffdf);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+.standings-row.rank-second .standings-rank-chip {
+    color: #052816;
+    background: linear-gradient(135deg, #4ade80, #86efac);
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+.standings-row.rank-eliminated .standings-rank-chip {
+    color: rgba(255, 230, 230, 0.92);
+    background: rgba(255, 93, 93, 0.16);
+    border-color: rgba(255, 93, 93, 0.22);
 }
 
 .standings-row.rank-first {
-    border-color: rgba(62, 221, 151, 0.92);
-    background: linear-gradient(135deg, rgba(56, 232, 157, 0.34), rgba(35, 196, 131, 0.14));
+    border-color: rgba(62, 221, 151, 0.88);
+    background: linear-gradient(135deg, rgba(56, 232, 157, 0.32), rgba(35, 196, 131, 0.14));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 12px 24px rgba(15, 78, 53, 0.16);
 }
 
 .standings-row.rank-second {
-    border-color: rgba(30, 174, 113, 0.86);
-    background: linear-gradient(135deg, rgba(35, 196, 131, 0.24), rgba(22, 150, 97, 0.1));
+    border-color: rgba(30, 174, 113, 0.82);
+    background: linear-gradient(135deg, rgba(35, 196, 131, 0.22), rgba(22, 150, 97, 0.1));
 }
 
 .standings-row.rank-eliminated {
-    border-color: rgba(255, 93, 93, 0.8);
-    background: rgba(255, 93, 93, 0.15);
+    border-color: rgba(255, 93, 93, 0.45);
+    background: linear-gradient(135deg, rgba(255, 93, 93, 0.12), rgba(255, 93, 93, 0.05));
 }
 
 .standings-empty {
     color: var(--text-muted);
     font-style: italic;
     margin: 0;
+    padding: 0.7rem 0.2rem 0.1rem;
 }
 
 .group-card {
@@ -891,7 +1020,7 @@ body {
     background: transparent;
     color: var(--text-muted);
     width: 30px;
-    height: 30px;
+    height: 28px;
     border-radius: 50%;
     font-size: 1.1rem;
     line-height: 1;
@@ -1003,7 +1132,7 @@ body {
 
 .knockout-column {
     background: rgba(11, 14, 33, 0.9);
-    border-radius: 16px;
+    border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.06);
     padding: 1rem;
     display: flex;
@@ -1034,7 +1163,7 @@ body {
 .knockout-match {
     background: rgba(143, 123, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 16px;
+    border-radius: 14px;
     padding: 0.85rem;
     display: flex;
     flex-direction: column;
@@ -1091,7 +1220,7 @@ body {
 
 .podium {
     background: rgba(5, 8, 22, 0.85);
-    border-radius: 16px;
+    border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.07);
     padding: 1rem;
 }
@@ -1133,7 +1262,7 @@ body {
 .performance-board {
     width: 100%;
     background: rgba(5, 8, 22, 0.85);
-    border-radius: 16px;
+    border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     padding: 1rem;
 }
@@ -1149,7 +1278,7 @@ body {
     margin-top: 0;
     margin-bottom: 1rem;
     color: var(--text-muted);
-    font-size: 0.95rem;
+    font-size: 0.91rem;
 }
 
 #close-performance {
@@ -1176,7 +1305,7 @@ body {
 .performance-board table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.95rem;
+    font-size: 0.91rem;
 }
 
 .performance-board th,
@@ -1283,3 +1412,8 @@ body {
         width: 100%;
     }
 }
+
+
+
+
+

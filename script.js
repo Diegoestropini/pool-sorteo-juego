@@ -964,13 +964,18 @@ function updateStandings() {
         card.className = 'standings-card';
 
         const header = document.createElement('header');
+        const headerInfo = document.createElement('div');
+        headerInfo.className = 'standings-card__heading';
         const title = document.createElement('h3');
         title.textContent = group.name;
+        const subtitle = document.createElement('p');
+        subtitle.className = 'standings-card__subtitle';
+        subtitle.textContent = 'Clasificaci\u00f3n parcial';
+        headerInfo.append(title, subtitle);
         const badge = document.createElement('span');
-        badge.className = 'badge';
+        badge.className = 'badge badge--standings';
         badge.textContent = String.fromCharCode(65 + groupIndex);
-        header.appendChild(title);
-        header.appendChild(badge);
+        header.append(headerInfo, badge);
         card.appendChild(header);
 
         const players = getOrderedPlayers(group, groupIndex);
@@ -978,7 +983,7 @@ function updateStandings() {
         if (!players.length) {
             const empty = document.createElement('p');
             empty.className = 'standings-empty';
-            empty.textContent = 'Sin jugadores todavía.';
+            empty.textContent = 'Sin jugadores todav\u00eda.';
             card.appendChild(empty);
         } else {
             const list = document.createElement('ol');
@@ -997,14 +1002,24 @@ function updateStandings() {
                     row.classList.add('rank-eliminated');
                 }
 
+                const rankChip = document.createElement('span');
+                rankChip.className = 'standings-rank-chip';
+                rankChip.textContent = index + 1;
+
+                const playerInfo = document.createElement('div');
+                playerInfo.className = 'standings-player';
                 const nameSpan = document.createElement('span');
+                nameSpan.className = 'standings-player-name';
                 nameSpan.textContent = player.name;
-                const stats = document.createElement('small');
+                playerInfo.appendChild(nameSpan);
+
+                const stats = document.createElement('div');
+                stats.className = 'standings-stats';
                 const pointsText = document.createElement('span');
+                pointsText.className = 'standings-stat standings-stat--points';
                 pointsText.textContent = `${player.points} pts`;
-                const separatorText = document.createTextNode(' · ');
                 const diffText = document.createElement('span');
-                diffText.classList.add('standings-diff');
+                diffText.classList.add('standings-stat', 'standings-diff');
                 if (player.diff > 0) {
                     diffText.classList.add('standings-diff--positive');
                     diffText.textContent = `+${player.diff} dif`;
@@ -1015,9 +1030,9 @@ function updateStandings() {
                     diffText.classList.add('standings-diff--neutral');
                     diffText.textContent = '0 dif';
                 }
-                stats.append(pointsText, separatorText, diffText);
-                row.appendChild(nameSpan);
-                row.appendChild(stats);
+                stats.append(pointsText, diffText);
+
+                row.append(rankChip, playerInfo, stats);
                 list.appendChild(row);
             });
 
@@ -1816,4 +1831,5 @@ updateUndoState();
 if (knockoutState.started) {
     renderKnockoutStage();
 }
+
 
