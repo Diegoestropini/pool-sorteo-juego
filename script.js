@@ -719,8 +719,16 @@ function refreshUI() {
     refreshManualControls();
 }
 
+function normalizeParticipantName(name) {
+    if (!name) {
+        return name;
+    }
+
+    return name.charAt(0).toLocaleUpperCase() + name.slice(1);
+}
+
 function addParticipant() {
-    const name = nameInput.value.trim();
+    const name = normalizeParticipantName(nameInput.value.trim());
     if (!name) {
         helperText.textContent = 'Ingresá un nombre válido para continuar.';
         return;
@@ -1831,5 +1839,6 @@ updateUndoState();
 if (knockoutState.started) {
     renderKnockoutStage();
 }
+
 
 
