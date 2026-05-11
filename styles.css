@@ -1,16 +1,21 @@
 :root {
     color-scheme: dark;
     font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --bg: radial-gradient(circle at top, #181a35, #05060f 55%);
-    --card-bg: rgba(18, 23, 38, 0.92);
-    --card-border: rgba(159, 140, 255, 0.25);
-    --accent: #8f7bff;
-    --accent-soft: rgba(143, 123, 255, 0.18);
+    --bg: radial-gradient(circle at top, #13231e, #05070d 58%);
+    --card-bg: rgba(13, 18, 29, 0.94);
+    --card-border: rgba(116, 139, 126, 0.22);
+    --accent: #6ee7b7;
+    --accent-soft: rgba(110, 231, 183, 0.14);
     --text-strong: #f7f5ff;
-    --text-muted: #a6a4c2;
+    --text-muted: #aab3c2;
     --success: #23c483;
     --warning: #ffb347;
     --danger: #ff6b81;
+    --radius-panel: 14px;
+    --radius-control: 10px;
+    --radius-card: 12px;
+    --shadow-panel: 0 18px 44px rgba(0, 0, 0, 0.36);
+    --shadow-soft: 0 10px 24px rgba(0, 0, 0, 0.24);
 }
 
 * {
@@ -30,11 +35,11 @@ body {
 
 .app-shell {
     width: min(1100px, 100%);
-    background: rgba(5, 8, 22, 0.85);
-    border-radius: 28px;
+    background: rgba(5, 8, 17, 0.9);
+    border-radius: 16px;
     padding: clamp(1.5rem, 2vw, 2.75rem);
-    box-shadow: 0 25px 90px rgba(0, 0, 0, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: var(--shadow-panel);
+    border: 1px solid rgba(255, 255, 255, 0.07);
     backdrop-filter: blur(12px);
 }
 
@@ -68,7 +73,7 @@ body {
     color: var(--text-strong);
     font-weight: 600;
     padding: 0.6rem 1.4rem;
-    border-radius: 999px;
+    border-radius: var(--radius-control);
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
@@ -91,9 +96,9 @@ body {
 .controls {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
-    border-radius: 20px;
+    border-radius: var(--radius-panel);
     padding: 1.5rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .controls label {
@@ -113,7 +118,7 @@ body {
 
 #toggle-manual-entry {
     align-self: flex-start;
-    border-radius: 999px;
+    border-radius: var(--radius-control);
     border: 1px solid rgba(255, 255, 255, 0.2);
     background: transparent;
     color: var(--text-strong);
@@ -138,7 +143,7 @@ body {
 
 .manual-field select {
     width: 100%;
-    border-radius: 14px;
+    border-radius: var(--radius-control);
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(10, 12, 28, 0.9);
     color: var(--text-strong);
@@ -156,9 +161,9 @@ body {
     display: none;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
-    border-radius: 20px;
+    border-radius: var(--radius-panel);
     padding: 1.5rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .edit-panel.is-visible {
@@ -189,7 +194,7 @@ body {
     color: var(--text-strong);
     width: 40px;
     height: 40px;
-    border-radius: 12px;
+    border-radius: var(--radius-control);
     font-size: 1.5rem;
     cursor: pointer;
     transition: background 0.2s ease, transform 0.2s ease;
@@ -203,7 +208,7 @@ body {
 
 #group-select {
     width: 100%;
-    border-radius: 14px;
+    border-radius: var(--radius-control);
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(10, 12, 28, 0.9);
     color: var(--text-strong);
@@ -220,7 +225,7 @@ body {
 .edit-panel__actions button {
     flex: 1;
     min-width: 180px;
-    border-radius: 14px;
+    border-radius: var(--radius-control);
     border: none;
     padding: 0.9rem 1.5rem;
     font-weight: 600;
@@ -263,7 +268,7 @@ body {
     flex: 1;
     padding: 0.9rem 1.1rem;
     font-size: 1rem;
-    border-radius: 14px;
+    border-radius: var(--radius-control);
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(10, 12, 28, 0.9);
     color: var(--text-strong);
@@ -306,6 +311,7 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1.25rem;
+    margin-top: 2rem;
 }
 
 .matches,
@@ -313,7 +319,7 @@ body {
     margin-top: 2rem;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
-    border-radius: 20px;
+    border-radius: var(--radius-panel);
     padding: 1.5rem;
 }
 
@@ -321,12 +327,12 @@ body {
     position: relative;
     overflow: hidden;
     background:
-        radial-gradient(circle at top left, rgba(79, 195, 247, 0.18), transparent 34%),
-        linear-gradient(145deg, rgba(14, 20, 38, 0.96), rgba(10, 14, 29, 0.92));
-    border-color: rgba(95, 179, 255, 0.28);
+        radial-gradient(circle at top left, rgba(110, 231, 183, 0.16), transparent 32%),
+        linear-gradient(145deg, rgba(13, 24, 28, 0.98), rgba(8, 13, 22, 0.96));
+    border-color: rgba(110, 231, 183, 0.34);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.04),
-        0 18px 42px rgba(4, 8, 20, 0.38);
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 22px 48px rgba(0, 0, 0, 0.42);
 }
 
 .matches::before {
@@ -334,8 +340,8 @@ body {
     position: absolute;
     inset: 0 auto 0 0;
     width: 5px;
-    background: linear-gradient(180deg, #6ee7f9 0%, #7c87ff 55%, rgba(124, 135, 255, 0.15) 100%);
-    opacity: 0.95;
+    background: linear-gradient(180deg, rgba(110, 231, 183, 0.95), rgba(74, 222, 128, 0.58));
+    opacity: 0.9;
 }
 
 .matches__header {
@@ -358,16 +364,14 @@ body {
     min-width: 220px;
     position: relative;
     padding: 1rem 1.15rem;
-    border-radius: 18px;
-    background: linear-gradient(135deg, rgba(110, 231, 249, 0.13), rgba(143, 123, 255, 0.15));
-    border: 1px solid rgba(110, 231, 249, 0.2);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.05),
-        0 12px 28px rgba(8, 13, 29, 0.3);
+    border-radius: var(--radius-card);
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(110, 231, 183, 0.18);
+    box-shadow: none;
 }
 
 .matches__title::after {
-    content: '';
+    content: none;
     position: absolute;
     inset: 0;
     border-radius: inherit;
@@ -445,9 +449,9 @@ body {
     flex-direction: column;
     gap: 1rem;
     padding: 1.2rem;
-    border-radius: 20px;
-    background: linear-gradient(180deg, rgba(9, 15, 31, 0.82), rgba(7, 11, 24, 0.94));
-    border: 1px solid rgba(126, 211, 255, 0.12);
+    border-radius: var(--radius-panel);
+    background: rgba(5, 10, 17, 0.78);
+    border: 1px solid rgba(110, 231, 183, 0.16);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
@@ -470,8 +474,8 @@ body {
     flex: 1;
     min-width: 150px;
     border: 1px solid var(--match-card-border, rgba(255, 255, 255, 0.08));
-    border-radius: 20px;
-    padding: 1.15rem 1.25rem;
+    border-radius: var(--radius-card);
+    padding: 1.25rem 1.25rem;
     font-weight: 800;
     color: var(--text-strong);
     cursor: pointer;
@@ -485,7 +489,7 @@ body {
     content: '';
     position: absolute;
     inset: 0;
-    opacity: 0.95;
+    opacity: 0.72;
     pointer-events: none;
     background: var(--match-card-overlay, linear-gradient(135deg, rgba(45, 212, 191, 0.3), rgba(125, 211, 252, 0.08)));
 }
@@ -505,8 +509,8 @@ body {
 }
 
 .match-player:not(:disabled):hover {
-    transform: translateY(-2px) scale(1.01);
-    box-shadow: 0 18px 38px rgba(6, 10, 24, 0.45);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
     border-color: rgba(255, 255, 255, 0.18);
 }
 
@@ -538,9 +542,9 @@ body {
     gap: 0.85rem;
     flex-wrap: wrap;
     padding: 0.9rem 1rem;
-    border-radius: 18px;
-    background: linear-gradient(135deg, rgba(45, 212, 191, 0.18), rgba(16, 185, 129, 0.12));
-    border: 1px solid rgba(45, 212, 191, 0.26);
+    border-radius: var(--radius-card);
+    background: rgba(110, 231, 183, 0.09);
+    border: 1px solid rgba(110, 231, 183, 0.18);
 }
 
 .match-diff label {
@@ -583,7 +587,7 @@ body {
     color: var(--text-strong);
     font-weight: 600;
     padding: 0.55rem 1.5rem;
-    border-radius: 999px;
+    border-radius: var(--radius-control);
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
@@ -605,7 +609,7 @@ body {
     color: var(--text-strong);
     font-weight: 600;
     padding: 0.55rem 1.25rem;
-    border-radius: 999px;
+    border-radius: var(--radius-control);
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
@@ -711,18 +715,11 @@ body {
 .standings-card {
     position: relative;
     overflow: hidden;
-    background:
-        radial-gradient(circle at top left, rgba(125, 211, 252, 0.12), transparent 32%),
-        radial-gradient(circle at top right, rgba(143, 123, 255, 0.1), transparent 36%),
-        linear-gradient(160deg, rgba(10, 14, 31, 0.98), rgba(7, 10, 22, 0.96));
-    border-radius: 20px;
+    background: linear-gradient(160deg, rgba(10, 15, 25, 0.98), rgba(7, 10, 18, 0.96));
+    border-radius: var(--radius-card);
     padding: 1.05rem 1rem 1rem;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.04),
-        inset 0 0 0 1px rgba(143, 123, 255, 0.04),
-        0 18px 36px rgba(4, 8, 20, 0.34),
-        0 0 28px rgba(143, 123, 255, 0.12);
+    box-shadow: var(--shadow-soft);
 }
 
 .standings-card::before {
@@ -730,19 +727,12 @@ body {
     position: absolute;
     inset: 0 auto 0 0;
     width: 5px;
-    background: linear-gradient(180deg, rgba(125, 211, 252, 0.95), rgba(143, 123, 255, 0.55));
-    box-shadow: 0 0 18px rgba(125, 211, 252, 0.35);
+    background: linear-gradient(180deg, rgba(110, 231, 183, 0.72), rgba(110, 231, 183, 0.18));
+    box-shadow: none;
 }
 
 .standings-card::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 28%),
-        linear-gradient(90deg, transparent, rgba(143, 123, 255, 0.05), transparent);
-    opacity: 0.9;
+    content: none;
 }
 
 .standings-card header {
@@ -786,12 +776,9 @@ body {
     padding: 0 0.78rem;
     font-weight: 800;
     color: #07111f;
-    background: linear-gradient(135deg, #9be7ff, #a78bfa);
+    background: linear-gradient(135deg, #a7f3d0, #6ee7b7);
     border: 1px solid rgba(255, 255, 255, 0.22);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.35),
-        0 0 20px rgba(125, 211, 252, 0.26),
-        0 12px 24px rgba(86, 116, 218, 0.24);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .standings-list {
@@ -809,17 +796,14 @@ body {
     grid-template-columns: 30px minmax(0, 2.6fr) auto;
     align-items: center;
     gap: 0.55rem;
-    border-radius: 14px;
+    border-radius: var(--radius-control);
     padding: 0.68rem 0.74rem;
     background:
         linear-gradient(135deg, rgba(143, 123, 255, 0.12), rgba(143, 123, 255, 0.04)),
         rgba(8, 12, 28, 0.88);
     border: 1px solid rgba(255, 255, 255, 0.08);
     font-size: 1rem;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.04),
-        0 0 0 1px rgba(143, 123, 255, 0.04),
-        0 8px 18px rgba(5, 9, 20, 0.24);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
@@ -828,7 +812,7 @@ body {
     position: absolute;
     inset: 8px auto 8px 0;
     width: 3px;
-    border-radius: 999px;
+    border-radius: var(--radius-control);
     background: rgba(143, 123, 255, 0.7);
     box-shadow: 0 0 14px rgba(143, 123, 255, 0.25);
 }
@@ -836,11 +820,7 @@ body {
 .standings-row:hover {
     transform: translateY(-1px);
     border-color: rgba(143, 123, 255, 0.36);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        0 0 0 1px rgba(143, 123, 255, 0.08),
-        0 0 24px rgba(143, 123, 255, 0.14),
-        0 12px 24px rgba(5, 9, 20, 0.28);
+    box-shadow: var(--shadow-soft);
 }
 
 .standings-rank-chip {
@@ -867,12 +847,12 @@ body {
 
 .standings-player-name {
     display: block;
-    color: #c8f3ff;
+    color: #d8fff0;
     font-family: 'Sora', 'Manrope', system-ui, sans-serif;
     font-size: 0.91rem;
     font-weight: 700;
     letter-spacing: 0.01em;
-    text-shadow: 0 0 18px rgba(79, 195, 247, 0.18);
+    text-shadow: none;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: clip;
@@ -1071,15 +1051,15 @@ body {
 }
 
 .group-card {
-    --group-color: #8f7bff;
-    --group-chip-bg: rgba(143, 123, 255, 0.2);
-    --group-slot-bg: rgba(143, 123, 255, 0.08);
-    --group-slot-border: rgba(143, 123, 255, 0.4);
-    background: linear-gradient(160deg, rgba(8, 10, 30, 0.9), rgba(5, 7, 21, 0.85));
+    --group-color: #6ee7b7;
+    --group-chip-bg: rgba(110, 231, 183, 0.16);
+    --group-slot-bg: rgba(110, 231, 183, 0.07);
+    --group-slot-border: rgba(110, 231, 183, 0.28);
+    background: linear-gradient(160deg, rgba(9, 13, 24, 0.94), rgba(6, 9, 17, 0.9));
     border: 1px solid var(--group-slot-border);
-    border-radius: 20px;
+    border-radius: var(--radius-card);
     padding: 1.5rem;
-    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--shadow-soft);
     min-height: 230px;
     display: flex;
     flex-direction: column;
@@ -1110,7 +1090,7 @@ body {
     justify-content: center;
     width: 40px;
     height: 40px;
-    border-radius: 12px;
+    border-radius: var(--radius-control);
     background: var(--accent-soft);
     color: var(--accent);
     font-weight: 700;
@@ -1128,7 +1108,7 @@ body {
 
 .group-card li {
     padding: 0.7rem 0.9rem;
-    border-radius: 14px;
+    border-radius: var(--radius-control);
     background: var(--group-slot-bg);
     border: 1px dashed var(--group-slot-border);
     min-height: 45px;
@@ -1142,7 +1122,7 @@ body {
 }
 
 .group-card li.filled {
-    background: rgba(2, 6, 20, 0.95);
+    background: rgba(4, 9, 17, 0.95);
     border-style: solid;
     border-color: var(--group-slot-border);
     color: var(--text-strong);
@@ -1183,31 +1163,31 @@ body {
 }
 
 .group-card--a {
-    --group-color: #9f8cff;
-    --group-chip-bg: rgba(159, 140, 255, 0.25);
-    --group-slot-bg: rgba(159, 140, 255, 0.12);
-    --group-slot-border: rgba(159, 140, 255, 0.45);
+    --group-color: #a7f3d0;
+    --group-chip-bg: rgba(110, 231, 183, 0.16);
+    --group-slot-bg: rgba(110, 231, 183, 0.08);
+    --group-slot-border: rgba(110, 231, 183, 0.34);
 }
 
 .group-card--b {
-    --group-color: #2dd4bf;
-    --group-chip-bg: rgba(45, 212, 191, 0.2);
-    --group-slot-bg: rgba(45, 212, 191, 0.12);
-    --group-slot-border: rgba(45, 212, 191, 0.45);
+    --group-color: #93c5fd;
+    --group-chip-bg: rgba(147, 197, 253, 0.14);
+    --group-slot-bg: rgba(147, 197, 253, 0.07);
+    --group-slot-border: rgba(147, 197, 253, 0.28);
 }
 
 .group-card--c {
-    --group-color: #f8c04b;
-    --group-chip-bg: rgba(248, 192, 75, 0.25);
-    --group-slot-bg: rgba(248, 192, 75, 0.14);
-    --group-slot-border: rgba(248, 192, 75, 0.45);
+    --group-color: #fcd34d;
+    --group-chip-bg: rgba(252, 211, 77, 0.14);
+    --group-slot-bg: rgba(252, 211, 77, 0.08);
+    --group-slot-border: rgba(252, 211, 77, 0.28);
 }
 
 .group-card--d {
-    --group-color: #fb7185;
-    --group-chip-bg: rgba(251, 113, 133, 0.22);
-    --group-slot-bg: rgba(251, 113, 133, 0.12);
-    --group-slot-border: rgba(251, 113, 133, 0.45);
+    --group-color: #fda4af;
+    --group-chip-bg: rgba(253, 164, 175, 0.14);
+    --group-slot-bg: rgba(253, 164, 175, 0.07);
+    --group-slot-border: rgba(253, 164, 175, 0.26);
 }
 
 .group-card li .position-label {
@@ -1219,7 +1199,7 @@ body {
     margin-top: 2rem;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
-    border-radius: 20px;
+    border-radius: var(--radius-panel);
     padding: 1.5rem;
 }
 
@@ -1243,7 +1223,7 @@ body {
 
 #play-finals {
     border: none;
-    border-radius: 999px;
+    border-radius: var(--radius-control);
     padding: 0.85rem 1.8rem;
     font-weight: 700;
     background: var(--accent);
@@ -1276,7 +1256,7 @@ body {
 
 .knockout-column {
     background: rgba(11, 14, 33, 0.9);
-    border-radius: 14px;
+    border-radius: var(--radius-card);
     border: 1px solid rgba(255, 255, 255, 0.06);
     padding: 1rem;
     display: flex;
@@ -1307,7 +1287,7 @@ body {
 .knockout-match {
     background: rgba(143, 123, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 14px;
+    border-radius: var(--radius-card);
     padding: 0.85rem;
     display: flex;
     flex-direction: column;
@@ -1330,7 +1310,7 @@ body {
 
 .knockout-player {
     border: none;
-    border-radius: 12px;
+    border-radius: var(--radius-control);
     padding: 0.65rem 0.9rem;
     background: rgba(5, 8, 22, 0.85);
     color: var(--text-strong);
@@ -1364,7 +1344,7 @@ body {
 
 .podium {
     background: rgba(5, 8, 22, 0.85);
-    border-radius: 14px;
+    border-radius: var(--radius-card);
     border: 1px solid rgba(255, 255, 255, 0.07);
     padding: 1rem;
 }
@@ -1389,7 +1369,7 @@ body {
 #show-performance {
     align-self: flex-start;
     border: none;
-    border-radius: 999px;
+    border-radius: var(--radius-control);
     padding: 0.7rem 1.6rem;
     font-weight: 600;
     background: var(--accent);
@@ -1406,7 +1386,7 @@ body {
 .performance-board {
     width: 100%;
     background: rgba(5, 8, 22, 0.85);
-    border-radius: 14px;
+    border-radius: var(--radius-card);
     border: 1px solid rgba(255, 255, 255, 0.08);
     padding: 1rem;
 }
@@ -1534,13 +1514,30 @@ body {
     font-style: italic;
 }
 
+.match-player,
+#match-player-b {
+    background: linear-gradient(135deg, rgba(9, 42, 32, 0.96), rgba(12, 25, 38, 0.94));
+    box-shadow: var(--shadow-soft);
+}
+
+.match-player::before,
+#match-player-b::before {
+    background: linear-gradient(135deg, rgba(110, 231, 183, 0.18), rgba(147, 197, 253, 0.08));
+}
+
+.vs {
+    background: linear-gradient(135deg, #a7f3d0, #6ee7b7);
+    color: #07111f;
+    box-shadow: 0 10px 22px rgba(16, 185, 129, 0.2);
+}
+
 @media (max-width: 600px) {
     body {
         padding: 1rem;
     }
 
     .app-shell {
-        border-radius: 20px;
+        border-radius: var(--radius-panel);
     }
 
     .match-players {

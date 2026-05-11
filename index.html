@@ -63,10 +63,6 @@
             <p id="edit-feedback" class="edit-panel__feedback" aria-live="polite"></p>
         </section>
 
-        <section class="groups" id="groups-container">
-            <!-- Los grupos se crean dinámicamente -->
-        </section>
-
         <section class="matches" id="matches-panel">
             <div class="matches__header">
                 <div class="matches__title">
@@ -75,7 +71,7 @@
                 </div>
                 <div class="matches__undo-wrapper">
                     <button id="undo-arrow" type="button" class="matches__undo-icon" aria-label="Volver al partido anterior" disabled>
-                        <span aria-hidden="true">↺</span>
+                        <span aria-hidden="true">&cularr;</span>
                     </button>
                     <button id="undo-match" type="button" class="matches__undo" disabled>Deshacer resultado</button>
                 </div>
@@ -102,6 +98,10 @@
                     <div id="match-history-list" class="match-history-list"></div>
                 </section>
             </div>
+        </section>
+
+        <section class="groups" id="groups-container">
+            <!-- Los grupos se crean dinámicamente -->
         </section>
 
         <section class="standings" id="standings-panel">
@@ -172,7 +172,7 @@
             </div>
         </section>
 
-        <p class="note">Consejo: compartí la pantalla para que todos sigan el sorteo en tiempo real ✨</p>
+        <p class="note">Consejo: compartí la pantalla para que todos sigan el sorteo en tiempo real &#10024;</p>
     </div>
 
     <template id="group-template">
@@ -182,9 +182,9 @@
                 <span class="badge">A</span>
             </header>
             <ol>
-                <li data-position="1">—</li>
-                <li data-position="2">—</li>
-                <li data-position="3">—</li>
+                <li data-position="1">&mdash;</li>
+                <li data-position="2">&mdash;</li>
+                <li data-position="3">&mdash;</li>
             </ol>
         </article>
     </template>
