@@ -897,9 +897,9 @@ function addParticipant() {
         return;
     }
 
-    const wasAssigned = manualMode
-        ? assignParticipantManually(name)
-        : assignParticipantAutomatically(name);
+    const wasAssigned = totalParticipants === 0
+        ? assignParticipantAutomatically(name)
+        : (manualMode ? assignParticipantManually(name) : assignParticipantAutomatically(name));
 
     if (!wasAssigned) {
         return;
@@ -924,10 +924,7 @@ function assignParticipantAutomatically(name) {
     }
 
     const availableGroups = GROUPS.map((group, groupIndex) => {
-        const firstEmptySlotIndex = group.slots.findIndex((slot, slotIndex) => {
-            const isReservedFirstPosition = groupIndex === 0 && slotIndex === 0;
-            return !slot && !isReservedFirstPosition;
-        });
+        const firstEmptySlotIndex = group.slots.findIndex((slot) => !slot);
         return { groupIndex, firstEmptySlotIndex };
     }).filter((group) => group.firstEmptySlotIndex >= 0);
 
@@ -1050,12 +1047,11 @@ function removeParticipantFromSlot(groupIndex, slotIndex) {
 
     group.slots[slotIndex] = null;
     totalParticipants = Math.max(0, totalParticipants - 1);
-    helperText.textContent = `${slot.name} fue retirado del ${group.name}. El campeonato continÃºa.`;
-
     knockoutState = resetKnockoutState();
     hideKnockoutStage();
 
     refreshUI();
+    helperText.textContent = `${slot.name} fue retirado del ${group.name}. El campeonato continúa.`;
     rebuildMatchQueue(true);
     saveState();
 }
@@ -1741,7 +1737,10 @@ function rebuildMatchQueue(preserveProgress = true) {
     });
     const completedKeys = new Set(filteredHistory.map((entry) => getMatchKey(entry.match)));
 
-    const completedMatches = newQueue.filter((match) => completedKeys.has(getMatchKey(match)));
+    const matchesByKey = new Map(newQueue.map((match) => [getMatchKey(match), match]));
+    const completedMatches = filteredHistory
+        .map((entry) => matchesByKey.get(getMatchKey(entry.match)))
+        .filter(Boolean);
     const pendingMatches = newQueue.filter((match) => !completedKeys.has(getMatchKey(match)));
 
     // Keep the currently displayed match as the next one only after the group stage has started.
