@@ -875,6 +875,7 @@ function refreshUI() {
     updateCapacityUI();
     updateStandings();
     refreshManualControls();
+    updatePerformanceAvailability();
 }
 
 function normalizeParticipantName(name) {
