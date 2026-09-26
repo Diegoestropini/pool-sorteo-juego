@@ -69,6 +69,7 @@ let matchQueue = [];
 let currentMatchIndex = 0;
 let matchHistory = [];
 let manualMode = false;
+const standingsVisualStates = new WeakMap();
 
 const MATCH_PALETTES = Object.freeze([
     { homeBase: 'linear-gradient(135deg, rgba(11, 40, 35, 0.96), rgba(14, 61, 54, 0.9))', homeOverlay: 'linear-gradient(135deg, rgba(45, 212, 191, 0.3), rgba(125, 211, 252, 0.08))', homeBorder: 'rgba(94, 234, 212, 0.28)', homeShadow: '0 14px 32px rgba(8, 30, 28, 0.35)', awayBase: 'linear-gradient(135deg, rgba(18, 27, 63, 0.96), rgba(34, 24, 77, 0.9))', awayOverlay: 'linear-gradient(135deg, rgba(96, 165, 250, 0.28), rgba(167, 139, 250, 0.12))', awayBorder: 'rgba(129, 140, 248, 0.3)', awayShadow: '0 14px 32px rgba(10, 18, 44, 0.35)', vsBase: 'radial-gradient(circle at 30% 30%, rgba(125, 211, 252, 0.95), rgba(129, 140, 248, 0.92))', vsShadow: '0 14px 28px rgba(71, 103, 219, 0.28)' },
@@ -1165,6 +1166,7 @@ function updateStandings() {
                 const row = document.createElement('li');
                 row.className = 'standings-row';
                 const visualState = getStandingsVisualState(group, groupIndex, player, index, qualificationBudget);
+                standingsVisualStates.set(player, visualState);
                 if (visualState === 'rank-first' || visualState === 'rank-second') {
                     row.classList.add('rank-top', visualState);
                 } else {
@@ -2005,13 +2007,24 @@ function renderScreenBoard() {
     if (!upcoming.children.length) upcoming.appendChild(presentationElement('li', 'screen-empty', 'No hay más enfrentamientos pendientes.'));
     const rankings = document.getElementById('screen-rankings');
     rankings.replaceChildren();
+    const qualificationBudget = createQualificationBudget();
+    const stateLabels = {
+        'rank-first': 'Clasificado',
+        'rank-second': 'Clasificado',
+        'rank-top-live': 'En zona de clasificación',
+        'rank-contender': 'Con chances',
+        'rank-eliminated': 'Eliminado',
+    };
     GROUPS.forEach((group, groupIndex) => {
         const card = presentationElement('article', `screen-ranking group-card--${String.fromCharCode(97 + groupIndex)}`);
         card.appendChild(presentationElement('h3', '', group.name));
         const list = presentationElement('ol', '');
         getOrderedPlayers(group, groupIndex).forEach((player, index) => {
-            const row = presentationElement('li', '');
+            const visualState = standingsVisualStates.get(player)
+                || getStandingsVisualState(group, groupIndex, player, index, qualificationBudget);
+            const row = presentationElement('li', visualState);
             row.append(presentationElement('span', 'screen-rank', String(index + 1)), presentationElement('strong', '', player.name), presentationElement('span', 'screen-score', `${player.points} pts · ${player.diff > 0 ? '+' : ''}${player.diff}`));
+            row.appendChild(presentationElement('span', 'screen-qualification', stateLabels[visualState]));
             list.appendChild(row);
         });
         if (!list.children.length) card.appendChild(presentationElement('p', 'screen-empty', 'Esperando participantes'));
