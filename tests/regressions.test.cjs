@@ -35,6 +35,7 @@ function setup() {
         updateUndoState = () => {};
         applyMatchPalette = () => {};
         clearMatchPalette = () => {};
+        updateTournamentPresentation = () => {};
     `, context);
     return (code) => vm.runInContext(code, context, { timeout: 2000 });
 }
@@ -173,5 +174,51 @@ test('result is saved before rendering standings', () => {
             assert.equal(JSON.parse(localStorage.getItem(STORAGE_KEY)).matchHistory.length, 1);
         };
         registerMatchResult('home');
+    `);
+});
+
+test('journey follows results, corrections and restored finals', () => {
+    setup()(`
+        assert.equal(getTournamentStage(), 0);
+        GROUPS.forEach((g, i) => g.slots = ['A', 'B', 'C'].map(n => createPlayer(n + i)));
+        totalParticipants = 12;
+        rebuildMatchQueue();
+        assert.equal(getTournamentStage(), 1);
+        while (currentMatchIndex < matchQueue.length) registerMatchResult('home');
+        startKnockoutStage();
+        assert.equal(getTournamentStage(), 2);
+        knockoutState.quarters.forEach(m => registerKnockoutWinner('quarters', m.id, 0));
+        assert.equal(getTournamentStage(), 3);
+        knockoutState.semis.forEach(m => registerKnockoutWinner('semis', m.id, 0));
+        assert.equal(getTournamentStage(), 4);
+        registerKnockoutWinner('quarters', 'E', 1);
+        assert.equal(getTournamentStage(), 3);
+        assert.equal(getMatchWinner(knockoutState.final), null);
+        assert.equal(loadSavedState(), true);
+        assert.equal(getTournamentStage(), 3);
+        undoLastMatch();
+        assert.equal(getTournamentStage(), 1);
+    `);
+});
+
+test('audience queue follows postponement and only presents ready knockout matches as playable', () => {
+    setup()(`
+        GROUPS.forEach((g, i) => g.slots = ['A', 'B', 'C'].map(n => createPlayer(n + i)));
+        rebuildMatchQueue();
+        assert.equal(getPresentationMatches()[0].players[0], 'A0');
+        postponeCurrentMatch();
+        assert.equal(getPresentationMatches()[0].players[0], 'A1');
+        while (currentMatchIndex < matchQueue.length) registerMatchResult('home');
+        startKnockoutStage();
+        assert.equal(getPresentationMatches().length, 8);
+        assert.equal(getPresentationMatches().filter(m => m.ready).length, 4);
+        knockoutState.quarters.forEach(m => registerKnockoutWinner('quarters', m.id, 0));
+        assert.equal(getPresentationMatches()[0].label, 'Semifinal 1');
+        assert.equal(getPresentationMatches().filter(m => m.ready).length, 2);
+        knockoutState.semis.forEach(m => registerKnockoutWinner('semis', m.id, 0));
+        registerKnockoutWinner('thirdPlace', 'THIRD', 0);
+        assert.equal(getPresentationMatches()[0].label, 'Final');
+        registerKnockoutWinner('final', 'FINAL', 0);
+        assert.equal(getPresentationMatches().length, 0);
     `);
 });

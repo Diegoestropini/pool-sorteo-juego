@@ -14,12 +14,30 @@
     <div class="app-shell">
         <header class="app-header">
             <div class="header-actions">
+                <button id="toggle-screen-mode" type="button" aria-pressed="false">Modo pantalla</button>
                 <button id="edit-groups" type="button">Editar grupos</button>
                 <button id="reset-draw" type="button">Reiniciar</button>
             </div>
             <h1>Sorteo de 12 Participantes</h1>
             <p>El primer nombre se ubica automáticamente en el Grupo A - Posición 1. Los demás aparecerán en grupos al azar.</p>
         </header>
+
+        <nav class="tournament-progress" aria-label="Etapas del torneo">
+            <ol id="tournament-steps"></ol>
+            <p id="tournament-status" role="status"></p>
+        </nav>
+
+        <section id="screen-board" class="screen-board" aria-label="Pantalla del torneo" hidden>
+            <div class="screen-toolbar">
+                <span class="screen-brand">POOL <span> / Torneo en vivo</span></span>
+                <div><button id="screen-fullscreen" type="button">Pantalla completa</button><button id="exit-screen-mode" type="button">Volver al torneo</button></div>
+            </div>
+            <div class="screen-layout">
+                <section class="screen-current" aria-label="Partido actual"><p class="eyebrow" id="screen-match-label"></p><div id="screen-players"></div><p id="screen-match-status"></p></section>
+                <section class="screen-upcoming"><h2>A continuación</h2><ol id="screen-next"></ol></section>
+            </div>
+            <section class="screen-standings"><h2>Posiciones de grupos</h2><div id="screen-rankings"></div></section>
+        </section>
 
         <section class="controls">
             <label for="participant-name">Ingresá un nombre</label>
@@ -119,7 +137,10 @@
                 <button id="play-finals" type="button" disabled>Jugar la última fase</button>
             </div>
             <div id="knockout-stage" class="knockout-stage" hidden>
-                <div class="knockout-columns">
+                <p class="bracket-help">Seguí las líneas para ver quién avanza. En pantallas pequeñas, deslizá la llave hacia los lados.</p>
+                <div class="bracket-scroll" tabindex="0" role="region" aria-label="Llave de eliminación, desplazable horizontalmente">
+                <div class="knockout-columns" id="bracket-canvas">
+                    <svg id="bracket-lines" aria-hidden="true" focusable="false"></svg>
                     <article class="knockout-column">
                         <h3>Cuartos de final</h3>
                         <div id="quarter-matches" class="knockout-list"></div>
@@ -130,17 +151,21 @@
                     </article>
                     <article class="knockout-column knockout-column--finals">
                         <div>
-                            <h3>Partido por el tercer puesto</h3>
-                            <div id="third-place-match" class="knockout-list"></div>
-                        </div>
-                        <div>
                             <h3>Final</h3>
                             <div id="final-match" class="knockout-list"></div>
                         </div>
+                        <div class="bracket-third">
+                            <h3>Tercer puesto</h3>
+                            <p>Entre quienes pierden las semifinales</p>
+                            <div id="third-place-match" class="knockout-list"></div>
+                        </div>
                     </article>
                 </div>
+                </div>
                 <div id="podium" class="podium" hidden>
-                    <h3>Reconocimientos</h3>
+                    <span class="eyebrow">Torneo finalizado</span>
+                    <h3>El podio del torneo</h3>
+                    <div id="podium-cards" class="podium-cards"></div>
                     <p id="podium-text"></p>
                 </div>
                 <div id="performance-tools" class="performance-tools" hidden>

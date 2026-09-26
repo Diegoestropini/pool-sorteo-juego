@@ -1854,3 +1854,99 @@ select:focus-visible {
 
 
 
+
+/* Tournament journey */
+.tournament-progress { margin: 0 0 2rem; padding: 1.15rem 1.3rem; border: 1px solid var(--card-border); border-radius: var(--radius-card); background: rgba(13, 18, 29, .65); }
+.tournament-progress ol { list-style: none; display: flex; padding: 0; margin: 0; gap: .6rem; }
+.tournament-progress li { display: flex; align-items: center; gap: .55rem; color: var(--text-muted); font-size: .82rem; flex: 1; }
+.tournament-progress li:not(:last-child)::after { content: ''; height: 1px; flex: 1; background: var(--card-border); margin-left: .3rem; }
+.step-number { display: grid; place-items: center; flex: 0 0 28px; height: 28px; border: 1px solid var(--card-border); border-radius: 50%; font-size: .75rem; }
+.tournament-progress .is-current { color: var(--accent); font-weight: 700; }
+.is-current .step-number { background: var(--accent); color: #05070d; border-color: var(--accent); box-shadow: 0 0 20px var(--accent-soft); }
+.is-complete .step-number { color: var(--accent); background: var(--accent-soft); }
+#tournament-status { margin: .85rem 0 0; font-size: .78rem; color: var(--text-muted); }
+.eyebrow { text-transform: uppercase; font-size: .7rem; letter-spacing: .12em; font-weight: 700; color: var(--accent); }
+
+/* The bracket keeps its geometry on mobile inside a scrollable region. */
+.bracket-help { color: var(--text-muted); font-size: .8rem; margin: 0; }
+.bracket-scroll { overflow-x: auto; padding: .5rem 0 1rem; }
+.bracket-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.knockout-columns { position: relative; isolation: isolate; min-width: 800px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3rem; align-items: stretch; }
+#bracket-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: visible; }
+#bracket-lines path { fill: none; stroke: var(--card-border); stroke-width: 2; stroke-linejoin: round; }
+#bracket-lines path.is-resolved { stroke: var(--accent); opacity: .75; }
+.knockout-column { background: transparent; border: 0; box-shadow: none; padding: 0; }
+.knockout-column h3 { font-size: .9rem; color: var(--text-muted); margin-bottom: .8rem; }
+.knockout-match { background: #0d121d; border-color: var(--card-border); min-width: 0; }
+.knockout-player { overflow-wrap: anywhere; }
+#quarter-matches { display: grid; gap: 1rem; }
+#quarter-matches [data-bracket-id="E"] { order: 0; }
+#quarter-matches [data-bracket-id="G"] { order: 1; }
+#quarter-matches [data-bracket-id="F"] { order: 2; }
+#quarter-matches [data-bracket-id="H"] { order: 3; }
+#semi-matches { flex: 1; display: flex; justify-content: space-around; padding-bottom: 1rem; }
+.knockout-column--finals { justify-content: center; gap: 3rem; }
+.bracket-third { border-top: 1px dashed var(--card-border); padding-top: 1rem; }
+.bracket-third > p { color: var(--text-muted); font-size: .7rem; margin: -.3rem 0 .9rem; }
+
+/* Podium */
+.podium { padding: clamp(1.2rem, 3vw, 2.5rem); text-align: center; background: radial-gradient(ellipse at top, var(--accent-soft), transparent 65%), var(--card-bg); }
+.podium h3 { font-family: Sora, sans-serif; font-size: clamp(1.4rem, 3vw, 2rem); margin: .65rem 0 2.5rem; }
+.podium-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items: end; }
+.podium-card { display: flex; flex-direction: column; align-items: center; gap: .85rem; padding: 1.5rem 1rem; border: 1px solid var(--card-border); border-radius: var(--radius-card); background: #0d121d; animation: podium-arrive .65s ease both; }
+.podium-card--1 { padding-top: 2.4rem; padding-bottom: 2.4rem; border-color: var(--accent); background: linear-gradient(160deg, rgba(110,231,183,.15), #0d121d); box-shadow: 0 0 35px var(--accent-soft); }
+.podium-card--2 { animation-delay: .1s; }
+.podium-card--3 { animation-delay: .2s; }
+.podium-mark { color: var(--accent); font-family: Sora, sans-serif; font-size: 2rem; }
+.podium-mark svg { display: block; width: 52px; height: 52px; }
+.podium-name { font-size: clamp(1.1rem, 2.5vw, 1.7rem); overflow-wrap: anywhere; max-width: 100%; }
+.podium-place { color: var(--text-muted); font-size: .75rem; }
+#podium-text { font-size: .85rem; color: var(--text-muted); margin-top: 1.6rem; }
+@keyframes podium-arrive { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Audience view */
+body.screen-mode { padding: clamp(1rem, 2vw, 2rem); }
+.screen-mode .app-shell { width: min(1800px, 100%); padding: 0; background: transparent; border: 0; box-shadow: none; backdrop-filter: none; }
+.screen-mode .app-shell > :not(.tournament-progress):not(.screen-board) { display: none; }
+.screen-mode .tournament-progress { margin-bottom: 1rem; }
+.screen-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.screen-brand { font-family: Sora, sans-serif; font-weight: 700; letter-spacing: .08em; color: var(--accent); }
+.screen-brand span { font-family: Manrope, sans-serif; font-weight: 400; color: var(--text-muted); font-size: .85rem; letter-spacing: 0; }
+.screen-toolbar > div { display: flex; gap: .6rem; flex-wrap: wrap; }
+.screen-toolbar button { color: var(--text-strong); border: 1px solid var(--card-border); background: var(--card-bg); padding: .7rem 1rem; border-radius: var(--radius-control); cursor: pointer; }
+.screen-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: 1.3rem; }
+.screen-current, .screen-upcoming { border-radius: var(--radius-panel); border: 1px solid var(--card-border); padding: clamp(1.3rem, 3vw, 2.5rem); background: var(--card-bg); }
+.screen-current { background: radial-gradient(ellipse at top, var(--accent-soft), transparent 75%), var(--card-bg); border-color: rgba(110,231,183,.4); text-align: center; display: flex; flex-direction: column; justify-content: center; }
+#screen-players { display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin: 1.3rem 0; }
+.screen-player-name { font-family: Sora, sans-serif; font-size: clamp(1.5rem, 3.5vw, 3.8rem); line-height: 1.2; overflow-wrap: anywhere; min-width: 0; flex: 1; }
+.screen-vs { color: var(--accent); font-weight: 700; font-size: .85rem; flex-shrink: 0; }
+#screen-match-status { color: var(--text-muted); font-size: .8rem; }
+.screen-upcoming h2, .screen-standings h2 { font-size: 1rem; font-family: Sora, sans-serif; margin: 0 0 1.2rem; }
+.screen-upcoming ol, .screen-ranking ol { list-style: none; margin: 0; padding: 0; }
+.screen-upcoming li { padding: 1rem 0; border-top: 1px solid var(--card-border); display: flex; flex-direction: column; gap: .5rem; overflow-wrap: anywhere; }
+.screen-upcoming strong { font-size: 1rem; }
+.screen-standings { margin-top: 1.8rem; }
+#screen-rankings { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+.screen-ranking { border: 1px solid var(--card-border); border-top: 3px solid var(--group-color); border-radius: var(--radius-card); background: var(--card-bg); padding: 1.1rem; min-width: 0; }
+.screen-ranking h3 { color: var(--group-color); margin: 0 0 1rem; font-size: 1rem; }
+.screen-ranking li { display: grid; grid-template-columns: 1.2rem minmax(0, 1fr); gap: .3rem .5rem; padding: .6rem 0; border-top: 1px solid var(--card-border); }
+.screen-ranking strong { overflow-wrap: anywhere; }
+.screen-rank { color: var(--text-muted); }
+.screen-score { grid-column: 2; color: var(--accent); font-size: .75rem; }
+.screen-empty { color: var(--text-muted); font-size: .85rem; }
+@media (max-width: 900px) { #screen-rankings { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+    .tournament-progress { padding: .9rem .6rem; }
+    .tournament-progress ol { gap: .25rem; }
+    .tournament-progress li { flex-direction: column; font-size: .6rem; gap: .45rem; text-align: center; }
+    .tournament-progress li:not(:last-child)::after { display: none; }
+    .screen-layout { grid-template-columns: 1fr; }
+    #screen-players { flex-direction: column; gap: .9rem; }
+    .screen-player-name { font-size: 2rem; }
+    .podium-cards { gap: .45rem; }
+    .podium-card { padding: 1rem .4rem; gap: .6rem; }
+    .podium-card--1 { padding: 1.8rem .4rem; }
+    .podium-card .eyebrow { font-size: .55rem; letter-spacing: .04em; }
+    .podium-name { font-size: .95rem; }
+}
+@media (prefers-reduced-motion: reduce) { .podium-card { animation: none; } }

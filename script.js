@@ -882,6 +882,7 @@ function refreshUI() {
     updateStandings();
     refreshManualControls();
     updatePerformanceAvailability();
+    updateTournamentPresentation();
 }
 
 function normalizeParticipantName(name) {
@@ -1301,6 +1302,8 @@ function renderKnockoutStage() {
     renderKnockoutMatches(finalMatchContainer, [knockoutState.final], 'final');
     updatePodiumView();
     updatePerformanceAvailability();
+    updateTournamentPresentation();
+    requestAnimationFrame(drawBracketConnections);
 }
 
 function renderKnockoutMatches(container, matches, stageKey) {
@@ -1335,6 +1338,7 @@ function renderKnockoutMatches(container, matches, stageKey) {
 function createKnockoutMatchElement(match, stageKey) {
     const article = document.createElement('article');
     article.className = 'knockout-match';
+    article.dataset.bracketId = match.id;
 
     const header = document.createElement('header');
     const title = document.createElement('span');
@@ -1359,7 +1363,8 @@ function createKnockoutMatchElement(match, stageKey) {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'knockout-player';
-        button.textContent = player ? player.name : 'Pendiente';
+        const origins = { S1: ['Ganador E', 'Ganador G'], S2: ['Ganador F', 'Ganador H'], FINAL: ['Ganador S1', 'Ganador S2'], THIRD: ['Perdedor S1', 'Perdedor S2'] };
+        button.textContent = player ? player.name : (origins[match.id]?.[index] || 'Pendiente');
         button.disabled = !player;
         button.dataset.stage = stageKey;
         button.dataset.matchId = match.id;
@@ -1449,6 +1454,7 @@ function updatePodiumView() {
 
     if (champion && runnerUp && thirdPlaceWinner) {
         podiumElement.hidden = false;
+        renderPodiumCards(champion, runnerUp, thirdPlaceWinner);
         podiumText.innerHTML = '';
         const fragment = document.createDocumentFragment();
         fragment.append('🏆 Felicitaciones a ');
@@ -1788,6 +1794,7 @@ function updateUndoState() {
 }
 
 function updateMatchUI() {
+    updateTournamentPresentation();
     updateKnockoutButtonState();
     const match = matchQueue[currentMatchIndex];
     const availableMatch = Boolean(match);
@@ -1924,6 +1931,151 @@ function undoLastMatch() {
     updateUndoState();
 }
 
+// Presentation derives from the existing tournament state; it never records results.
+function getTournamentStage() {
+    if (knockoutState.started) {
+        if (knockoutState.quarters.some(match => !getMatchWinner(match))) return 2;
+        if (knockoutState.semis.some(match => !getMatchWinner(match))) return 3;
+        return 4;
+    }
+    return matchHistory.length > 0 || (totalParticipants > 0 && totalParticipants >= getTotalCapacity()) ? 1 : 0;
+}
+
+function getPresentationMatches() {
+    if (knockoutState.started) {
+        return [...knockoutState.quarters, ...knockoutState.semis, knockoutState.thirdPlace, knockoutState.final]
+            .filter(match => match && !getMatchWinner(match))
+            .map(match => ({ label: match.label, players: match.players.map(player => player?.name || 'Por definir'), ready: match.players.length === 2 && match.players.every(Boolean) }));
+    }
+    return matchQueue.slice(currentMatchIndex).map(match => ({
+        label: GROUPS[match.groupIndex].name,
+        players: [GROUPS[match.groupIndex].slots[match.homeIndex]?.name || 'Por definir', GROUPS[match.groupIndex].slots[match.awayIndex]?.name || 'Por definir'],
+        ready: isMatchPlayable(match),
+    }));
+}
+
+function presentationElement(tag, className, text) {
+    const element = document.createElement(tag);
+    element.className = className;
+    if (text !== undefined) element.textContent = text;
+    return element;
+}
+
+function updateTournamentPresentation() {
+    const steps = document.getElementById('tournament-steps');
+    if (!steps) return;
+    const stage = getTournamentStage();
+    const finished = Boolean(getMatchWinner(knockoutState.final) && getMatchWinner(knockoutState.thirdPlace));
+    steps.replaceChildren();
+    ['Inscripción', 'Grupos', 'Cuartos', 'Semifinal', 'Final'].forEach((label, index) => {
+        const item = presentationElement('li', index === stage ? 'is-current' : index < stage ? 'is-complete' : '');
+        if (index === stage) item.setAttribute('aria-current', 'step');
+        item.append(presentationElement('span', 'step-number', index < stage || finished ? '✓' : String(index + 1)), presentationElement('span', '', label));
+        steps.appendChild(item);
+    });
+    document.getElementById('tournament-status').textContent = finished ? 'Torneo finalizado' : stage === 0
+        ? `${totalParticipants} de ${getTotalCapacity()} participantes anotados`
+        : stage === 1 ? `${currentMatchIndex} de ${matchQueue.length} partidos de grupos registrados` : 'Fase de eliminación';
+    renderScreenBoard();
+}
+
+function renderScreenBoard() {
+    const board = document.getElementById('screen-board');
+    if (!board || board.hidden) return;
+    const matches = getPresentationMatches();
+    const activeIndex = matches.findIndex(match => match.ready);
+    const current = activeIndex >= 0 ? matches[activeIndex] : null;
+    const champion = getMatchWinner(knockoutState.final);
+    const players = document.getElementById('screen-players');
+    players.replaceChildren();
+    document.getElementById('screen-match-label').textContent = current ? `Ahora · ${current.label}` : champion ? 'Campeón del torneo' : 'Torneo de pool';
+    if (current) {
+        players.append(presentationElement('strong', 'screen-player-name', current.players[0]), presentationElement('span', 'screen-vs', 'VS'), presentationElement('strong', 'screen-player-name', current.players[1]));
+    } else {
+        players.append(presentationElement('strong', 'screen-player-name', champion?.name || (canStartKnockoutStage() ? '¡Se vienen los cuartos!' : 'Preparando el torneo')));
+    }
+    document.getElementById('screen-match-status').textContent = current ? 'Partido pendiente de resultado' : champion ? '¡Felicitaciones!' : canStartKnockoutStage() ? 'La fase de grupos está completa.' : 'Los enfrentamientos aparecerán al cargar participantes.';
+    const upcoming = document.getElementById('screen-next');
+    upcoming.replaceChildren();
+    matches.filter((_, index) => index !== activeIndex).slice(0, 3).forEach(match => {
+        const row = presentationElement('li', '');
+        row.append(presentationElement('span', 'eyebrow', match.label), presentationElement('strong', '', match.players.join(' vs ')));
+        upcoming.appendChild(row);
+    });
+    if (!upcoming.children.length) upcoming.appendChild(presentationElement('li', 'screen-empty', 'No hay más enfrentamientos pendientes.'));
+    const rankings = document.getElementById('screen-rankings');
+    rankings.replaceChildren();
+    GROUPS.forEach((group, groupIndex) => {
+        const card = presentationElement('article', `screen-ranking group-card--${String.fromCharCode(97 + groupIndex)}`);
+        card.appendChild(presentationElement('h3', '', group.name));
+        const list = presentationElement('ol', '');
+        getOrderedPlayers(group, groupIndex).forEach((player, index) => {
+            const row = presentationElement('li', '');
+            row.append(presentationElement('span', 'screen-rank', String(index + 1)), presentationElement('strong', '', player.name), presentationElement('span', 'screen-score', `${player.points} pts · ${player.diff > 0 ? '+' : ''}${player.diff}`));
+            list.appendChild(row);
+        });
+        if (!list.children.length) card.appendChild(presentationElement('p', 'screen-empty', 'Esperando participantes'));
+        card.appendChild(list);
+        rankings.appendChild(card);
+    });
+}
+
+function setScreenMode(enabled) {
+    document.body.classList.toggle('screen-mode', enabled);
+    document.getElementById('screen-board').hidden = !enabled;
+    document.getElementById('toggle-screen-mode').setAttribute('aria-pressed', String(enabled));
+    if (enabled) {
+        renderScreenBoard();
+        document.getElementById('exit-screen-mode').focus();
+    } else {
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+        document.getElementById('toggle-screen-mode').focus();
+        requestAnimationFrame(drawBracketConnections);
+    }
+}
+
+function renderPodiumCards(champion, runnerUp, third) {
+    const cards = document.getElementById('podium-cards');
+    const signature = JSON.stringify([champion.name, runnerUp.name, third.name]);
+    if (cards.dataset.signature === signature && cards.children.length) return;
+    cards.dataset.signature = signature;
+    cards.replaceChildren();
+    [[runnerUp, 2, 'Segundo puesto'], [champion, 1, 'Campeón'], [third, 3, 'Tercer puesto']].forEach(([player, rank, label]) => {
+        const card = presentationElement('article', `podium-card podium-card--${rank}`);
+        const mark = presentationElement('span', 'podium-mark', rank === 1 ? '♜' : String(rank).padStart(2, '0'));
+        if (rank === 1) mark.innerHTML = '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M14 7h20v13a10 10 0 0 1-20 0V7ZM14 10H7v7a8 8 0 0 0 8 8m19-15h7v7a8 8 0 0 1-8 8M24 30v10m-9 2h18"/></svg>';
+        mark.setAttribute('aria-hidden', 'true');
+        card.append(mark, presentationElement('span', 'eyebrow', label), presentationElement('strong', 'podium-name', player.name), presentationElement('span', 'podium-place', `${rank}.º lugar`));
+        cards.appendChild(card);
+    });
+}
+
+function drawBracketConnections() {
+    const canvas = document.getElementById('bracket-canvas');
+    const svg = document.getElementById('bracket-lines');
+    if (!canvas || !svg || !canvas.clientWidth) return;
+    svg.replaceChildren();
+    const box = canvas.getBoundingClientRect();
+    svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+    [['E', 'S1', 0], ['G', 'S1', 1], ['F', 'S2', 0], ['H', 'S2', 1], ['S1', 'FINAL', 0], ['S2', 'FINAL', 1]].forEach(([from, to, playerIndex]) => {
+        const source = canvas.querySelector(`[data-bracket-id="${from}"]`);
+        const target = canvas.querySelector(`[data-bracket-id="${to}"]`);
+        if (!source || !target) return;
+        const a = source.getBoundingClientRect();
+        const b = target.querySelectorAll('.knockout-player')[playerIndex].getBoundingClientRect();
+        const x1 = a.right - box.left;
+        const y1 = a.top + a.height / 2 - box.top;
+        const x2 = b.left - box.left;
+        const y2 = b.top + b.height / 2 - box.top;
+        const bend = x1 + (target.getBoundingClientRect().left - a.right) / 2;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', `M ${x1} ${y1} H ${bend} V ${y2} H ${x2}`);
+        const match = [...knockoutState.quarters, ...knockoutState.semis].find(match => match.id === from);
+        path.setAttribute('class', getMatchWinner(match) ? 'is-resolved' : '');
+        svg.appendChild(path);
+    });
+}
+
 addButton.addEventListener('click', addParticipant);
 nameInput.addEventListener('keyup', (event) => {
     if (event.key === 'Enter') {
@@ -1997,6 +2149,30 @@ document.addEventListener('keydown', (event) => {
         closeEditPanelView();
     }
 });
+
+document.getElementById('toggle-screen-mode').addEventListener('click', () => setScreenMode(true));
+document.getElementById('exit-screen-mode').addEventListener('click', () => setScreenMode(false));
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && document.body.classList.contains('screen-mode')) setScreenMode(false);
+});
+const fullscreenButton = document.getElementById('screen-fullscreen');
+fullscreenButton.hidden = !document.fullscreenEnabled;
+fullscreenButton.addEventListener('click', async () => {
+    try {
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else await document.documentElement.requestFullscreen();
+    } catch {
+        fullscreenButton.textContent = 'Pantalla completa no disponible';
+    }
+});
+document.addEventListener('fullscreenchange', () => {
+    fullscreenButton.textContent = document.fullscreenElement ? 'Salir de pantalla completa' : 'Pantalla completa';
+});
+if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(drawBracketConnections).observe(document.getElementById('bracket-canvas'));
+}
+window.addEventListener('resize', drawBracketConnections);
+document.fonts?.ready.then(drawBracketConnections);
 
 loadSavedState();
 populateGroupOptions();
