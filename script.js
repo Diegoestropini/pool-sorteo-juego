@@ -577,67 +577,69 @@ function createSimulatedHistoryEntry(match, winnerKey, diff) {
     };
 }
 
-function canPlayerStillQualify(entries, pendingMatches, historyEntries, group, groupIndex, targetSlotIndex, matchIndex = 0) {
-    if (matchIndex >= pendingMatches.length) {
-        const orderedEntries = getOrderedPlayerEntries(group, groupIndex, historyEntries, entries);
-        return orderedEntries.slice(0, 2).some((entry) => entry.slotIndex === targetSlotIndex);
+// One shared budget per table render keeps large groups responsive.
+function createQualificationBudget() {
+    return { remaining: 6000, deadline: Date.now() + 40 };
+}
+
+// true/false are proven outcomes; null means the bounded search is inconclusive.
+function searchQualification(entries, pendingMatches, historyEntries, group, groupIndex, targetSlotIndex, wantsQualification, matchIndex, budget) {
+    const target = entries.find((entry) => entry.slotIndex === targetSlotIndex);
+    if (!target) return null;
+    const remainingGames = new Map(entries.map((entry) => [entry.slotIndex, 0]));
+    for (let index = matchIndex; index < pendingMatches.length; index += 1) {
+        const match = pendingMatches[index];
+        remainingGames.set(match.homeIndex, (remainingGames.get(match.homeIndex) || 0) + 1);
+        remainingGames.set(match.awayIndex, (remainingGames.get(match.awayIndex) || 0) + 1);
     }
-
+    const minPoints = target.player.points;
+    const maxPoints = minPoints + remainingGames.get(targetSlotIndex);
+    const opponents = entries.filter((entry) => entry.slotIndex !== targetSlotIndex);
+    // Equal points may still be decided by difference or head-to-head results.
+    const possiblyAhead = opponents.filter((entry) => entry.player.points + remainingGames.get(entry.slotIndex) >= minPoints).length;
+    const certainlyAhead = opponents.filter((entry) => entry.player.points > maxPoints).length;
+    if (possiblyAhead < 2) return wantsQualification;
+    if (certainlyAhead >= 2) return !wantsQualification;
+    if (matchIndex >= pendingMatches.length) {
+        const qualified = getOrderedPlayerEntries(group, groupIndex, historyEntries, entries)
+            .slice(0, 2).some((entry) => entry.slotIndex === targetSlotIndex);
+        return qualified === wantsQualification;
+    }
+    if (budget.remaining <= 0 || Date.now() >= budget.deadline || matchIndex >= 64) return null;
+    budget.remaining -= 1;
     const match = pendingMatches[matchIndex];
-    const winnerOrder = match.homeIndex === targetSlotIndex
-        ? ['home', 'away']
-        : (match.awayIndex === targetSlotIndex ? ['away', 'home'] : ['home', 'away']);
-
+    const targetSide = match.homeIndex === targetSlotIndex ? 'home'
+        : (match.awayIndex === targetSlotIndex ? 'away' : null);
+    const preferredWinner = targetSide
+        ? (wantsQualification ? targetSide : (targetSide === 'home' ? 'away' : 'home'))
+        : 'home';
+    const winnerOrder = [preferredWinner, preferredWinner === 'home' ? 'away' : 'home'];
     for (const winnerKey of winnerOrder) {
-        const diffRange = winnerKey === 'home'
-            ? (match.homeIndex === targetSlotIndex ? { start: MAX_MATCH_DIFF, end: 0, step: -1 } : { start: 0, end: MAX_MATCH_DIFF, step: 1 })
-            : (match.awayIndex === targetSlotIndex ? { start: MAX_MATCH_DIFF, end: 0, step: -1 } : { start: 0, end: MAX_MATCH_DIFF, step: 1 });
-
-        for (let diff = diffRange.start; diffRange.step > 0 ? diff <= diffRange.end : diff >= diffRange.end; diff += diffRange.step) {
+        const largestFirst = wantsQualification ? winnerKey === targetSide : winnerKey !== targetSide;
+        for (let step = 0; step <= MAX_MATCH_DIFF; step += 1) {
+            // Count leaves too, so sorting them cannot exhaust the UI thread.
+            if (budget.remaining <= 0 || Date.now() >= budget.deadline) return null;
+            budget.remaining -= 1;
+            const diff = largestFirst ? MAX_MATCH_DIFF - step : step;
             const nextEntries = cloneSimulatedGroupEntries(entries);
-            if (!applySimulatedMatchResult(nextEntries, match, winnerKey, diff)) continue;
-
-            const nextHistoryEntries = historyEntries.concat(createSimulatedHistoryEntry(match, winnerKey, diff));
-            if (canPlayerStillQualify(nextEntries, pendingMatches, nextHistoryEntries, group, groupIndex, targetSlotIndex, matchIndex + 1)) {
-                return true;
-            }
+            if (!applySimulatedMatchResult(nextEntries, match, winnerKey, diff)) return null;
+            const nextHistory = historyEntries.concat(createSimulatedHistoryEntry(match, winnerKey, diff));
+            const result = searchQualification(nextEntries, pendingMatches, nextHistory, group, groupIndex, targetSlotIndex, wantsQualification, matchIndex + 1, budget);
+            if (result !== false) return result;
         }
     }
-
     return false;
 }
 
-function canPlayerMissQualification(entries, pendingMatches, historyEntries, group, groupIndex, targetSlotIndex, matchIndex = 0) {
-    if (matchIndex >= pendingMatches.length) {
-        const orderedEntries = getOrderedPlayerEntries(group, groupIndex, historyEntries, entries);
-        return !orderedEntries.slice(0, 2).some((entry) => entry.slotIndex === targetSlotIndex);
-    }
-
-    const match = pendingMatches[matchIndex];
-    const winnerOrder = match.homeIndex === targetSlotIndex
-        ? ['away', 'home']
-        : (match.awayIndex === targetSlotIndex ? ['home', 'away'] : ['home', 'away']);
-
-    for (const winnerKey of winnerOrder) {
-        const diffRange = winnerKey === 'home'
-            ? (match.homeIndex === targetSlotIndex ? { start: 0, end: MAX_MATCH_DIFF, step: 1 } : { start: MAX_MATCH_DIFF, end: 0, step: -1 })
-            : (match.awayIndex === targetSlotIndex ? { start: 0, end: MAX_MATCH_DIFF, step: 1 } : { start: MAX_MATCH_DIFF, end: 0, step: -1 });
-
-        for (let diff = diffRange.start; diffRange.step > 0 ? diff <= diffRange.end : diff >= diffRange.end; diff += diffRange.step) {
-            const nextEntries = cloneSimulatedGroupEntries(entries);
-            if (!applySimulatedMatchResult(nextEntries, match, winnerKey, diff)) continue;
-
-            const nextHistoryEntries = historyEntries.concat(createSimulatedHistoryEntry(match, winnerKey, diff));
-            if (canPlayerMissQualification(nextEntries, pendingMatches, nextHistoryEntries, group, groupIndex, targetSlotIndex, matchIndex + 1)) {
-                return true;
-            }
-        }
-    }
-
-    return false;
+function canPlayerStillQualify(entries, pendingMatches, historyEntries, group, groupIndex, targetSlotIndex, matchIndex = 0, budget = createQualificationBudget()) {
+    return searchQualification(entries, pendingMatches, historyEntries, group, groupIndex, targetSlotIndex, true, matchIndex, budget);
 }
 
-function getStandingsVisualState(group, groupIndex, player, rankingIndex) {
+function canPlayerMissQualification(entries, pendingMatches, historyEntries, group, groupIndex, targetSlotIndex, matchIndex = 0, budget = createQualificationBudget()) {
+    return searchQualification(entries, pendingMatches, historyEntries, group, groupIndex, targetSlotIndex, false, matchIndex, budget);
+}
+
+function getStandingsVisualState(group, groupIndex, player, rankingIndex, budget = createQualificationBudget()) {
     const slotIndex = group.slots.findIndex((slot) => slot === player);
     if (slotIndex < 0) {
         return 'rank-contender';
@@ -656,10 +658,12 @@ function getStandingsVisualState(group, groupIndex, player, rankingIndex) {
             groupHistoryEntries,
             group,
             groupIndex,
-            slotIndex
+            slotIndex,
+            0,
+            budget
         );
 
-        if (canLoseQualification) {
+        if (canLoseQualification !== false) {
             return 'rank-top-live';
         }
 
@@ -672,10 +676,12 @@ function getStandingsVisualState(group, groupIndex, player, rankingIndex) {
         groupHistoryEntries,
         group,
         groupIndex,
-        slotIndex
+        slotIndex,
+        0,
+        budget
     );
 
-    return hasQualificationPath ? 'rank-contender' : 'rank-eliminated';
+    return hasQualificationPath !== false ? 'rank-contender' : 'rank-eliminated';
 }
 
 function createKnockoutMatch(id, label, playerOne = null, playerTwo = null) {
@@ -909,8 +915,8 @@ function addParticipant() {
     totalParticipants += 1;
     knockoutState = resetKnockoutState();
     hideKnockoutStage();
-    refreshUI();
     rebuildMatchQueue();
+    refreshUI();
     nameInput.value = '';
     nameInput.focus();
     saveState();
@@ -1051,9 +1057,9 @@ function removeParticipantFromSlot(groupIndex, slotIndex) {
     knockoutState = resetKnockoutState();
     hideKnockoutStage();
 
+    rebuildMatchQueue(true);
     refreshUI();
     helperText.textContent = `${slot.name} fue retirado del ${group.name}. El campeonato continúa.`;
-    rebuildMatchQueue(true);
     saveState();
 }
 
@@ -1118,6 +1124,7 @@ function removeSlotFromGroup() {
 function updateStandings() {
     if (!standingsContainer) return;
 
+    const qualificationBudget = createQualificationBudget();
     standingsContainer.innerHTML = '';
     const grid = document.createElement('div');
     grid.className = 'standings-grid';
@@ -1156,7 +1163,7 @@ function updateStandings() {
             players.forEach((player, index) => {
                 const row = document.createElement('li');
                 row.className = 'standings-row';
-                const visualState = getStandingsVisualState(group, groupIndex, player, index);
+                const visualState = getStandingsVisualState(group, groupIndex, player, index, qualificationBudget);
                 if (visualState === 'rank-first' || visualState === 'rank-second') {
                     row.classList.add('rank-top', visualState);
                 } else {
@@ -1857,10 +1864,10 @@ function registerMatchResult(winnerKey) {
     currentMatchIndex += 1;
     diffInput.value = 0;
     diffValue.textContent = '0';
+    saveState();
     updateStandings();
     updateMatchUI();
     updateUndoState();
-    saveState();
 }
 
 function postponeCurrentMatch() {
@@ -1871,6 +1878,8 @@ function postponeCurrentMatch() {
     if (!postponedMatch) return;
 
     matchQueue.push(postponedMatch);
+    diffInput.value = 0;
+    diffValue.textContent = '0';
     updateMatchUI();
     saveState();
 }
@@ -1878,6 +1887,8 @@ function postponeCurrentMatch() {
 function undoLastMatch() {
     if (!matchHistory.length) return;
 
+    knockoutState = resetKnockoutState();
+    hideKnockoutStage();
     const lastResult = matchHistory.pop();
     const { match, winnerKey, diff } = lastResult;
     const group = GROUPS[match.groupIndex];
@@ -1907,10 +1918,10 @@ function undoLastMatch() {
     currentMatchIndex = Math.max(0, currentMatchIndex - 1);
     diffInput.value = diff;
     diffValue.textContent = String(diff);
+    saveState();
     updateStandings();
     updateMatchUI();
     updateUndoState();
-    saveState();
 }
 
 addButton.addEventListener('click', addParticipant);
